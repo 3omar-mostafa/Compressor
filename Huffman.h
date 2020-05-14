@@ -3,6 +3,8 @@
 
 #include <queue>
 #include <map>
+#include <unordered_map>
+#include <stdexcept>
 
 #include "Node.h"
 #include "Converter.h"
@@ -52,11 +54,92 @@ public:
     }
 
 
+    void decompress(const string& filename) {
+
+        string compressedData = BinaryIO::readBinaryFile(filename);
+
+        if (compressedData.substr(0, fileSignature.length()) != fileSignature) {
+            throw domain_error("Wrong File Type");
+        }
+
+        reconstructHuffmanCodes(compressedData);
+        reconstructHuffmanTree();
+
+        int fileHeaderSizeInBits = decodeFileHeaderSizeInBits(compressedData);
+        int fileHeaderSizeInBytes = fileHeaderSizeInBits / BYTE + (fileHeaderSizeInBits % BYTE != 0);
+
+        compressedData.erase(0, fileHeaderSizeInBytes); // file header is no longer needed so we can release memory
+
+        string outputFileName = filename + ".decoded";
+        remove(outputFileName.c_str()); // remove the file if exists
+
+        decode(compressedData, outputFileName);
+
+        deallocateHuffmanTree(huffmanTree); // release memory
+        decodingHuffmanCodes.clear(); // release memory
+
+    }
+
     virtual ~Huffman() {
         deallocateHuffmanTree(huffmanTree);
     }
 
 private:
+
+    void decode(const string& toBeDecoded, const string& outputFileName) {
+
+        string toBeDecodedBinaryString;
+        string decodedData, currentCode;
+        Node* currentNode = huffmanTree;
+
+        int positionCompressedData = 0;
+        do {
+
+            toBeDecodedBinaryString = Converter::string_ToBitString(toBeDecoded, positionCompressedData,
+                                                                    ONE_MEGA_BYTE);
+            positionCompressedData += ONE_MEGA_BYTE;
+
+            // if we reached end of the file
+            if (positionCompressedData >= toBeDecoded.length()) {
+                int sizeOfLastByte = toBeDecoded.back();
+                // Remove the last 8 Bits from the string which were for the last byte size
+                toBeDecodedBinaryString.erase(toBeDecodedBinaryString.length() - BYTE, BYTE);
+
+                // Remove unneeded bits from last byte
+                // example: if sizeOfLastByte is 5 and the last byte is 10100011 we remove 101
+                toBeDecodedBinaryString.erase(toBeDecodedBinaryString.length() - BYTE,
+                                              BYTE - sizeOfLastByte);
+            }
+
+            for (char toBeDecodedBit : toBeDecodedBinaryString) {
+
+                if (toBeDecodedBit == '1')
+                    currentNode = currentNode->left;
+                else if (toBeDecodedBit == '0')
+                    currentNode = currentNode->right;
+
+                currentCode += toBeDecodedBit;
+
+                if (currentNode->isLeaf()) {
+                    decodedData += decodingHuffmanCodes[currentCode];
+                    currentCode.clear();
+                    currentNode = huffmanTree;
+                }
+            }
+
+            // exports the decoded data until now to free some memory
+            if (decodedData.length() >= ONE_MEGA_BYTE) {
+                BinaryIO::writeBinaryFile(outputFileName, decodedData);
+                decodedData.clear();
+            }
+
+        } while (positionCompressedData < toBeDecoded.length());
+
+        if (!decodedData.empty()) {
+            BinaryIO::writeBinaryFile(outputFileName, decodedData);
+        }
+
+    }
 
 
     unsigned int decodeFileHeaderSizeInBits(const string& compressedFileData) {
@@ -82,6 +165,43 @@ private:
 
         generateHuffmanCodes(node->left, code + "1");
         generateHuffmanCodes(node->right, code + "0");
+
+    }
+
+
+    // Read the file Header and construct the Huffman Codes Dictionary
+    void reconstructHuffmanCodes(const string& compressedFileData) {
+
+        int fileHeaderSize = decodeFileHeaderSizeInBits(compressedFileData);
+
+        // 2 -> size of (file header size)
+        int smallestCodeLengthIndex = fileSignature.length() + 2;
+        int smallestCodeLength = compressedFileData[smallestCodeLengthIndex];
+
+        int dictionaryStartIndex = smallestCodeLengthIndex + 1;
+        int dictionaryLengthInBits = fileHeaderSize - (dictionaryStartIndex * BYTE);
+
+        string dictionaryBits = Converter::string_ToBitString(
+                compressedFileData, dictionaryStartIndex, dictionaryLengthInBits / BYTE + 1);
+
+        // if the header does not fit in bytes, i.e. there are extra bits which does not belong to it
+        if (dictionaryLengthInBits % BYTE != 0) {
+            int bitsToEraseLength = dictionaryBits.length() - dictionaryLengthInBits;
+            dictionaryBits.erase(dictionaryBits.length() - BYTE, bitsToEraseLength);
+        }
+
+        int codeLength = smallestCodeLength;
+        char value;
+        string code;
+        for (int i = 0; i < dictionaryLengthInBits;) {
+            value = Converter::bitString_ToRealBinary(dictionaryBits, i, BYTE)[0];
+            i += BYTE;
+            codeLength += dictionaryBits[i] == '1' ? 1 : 0; // to understand this look at dictionary encoding
+            i++;
+            code = dictionaryBits.substr(i, codeLength);
+            i += codeLength;
+            decodingHuffmanCodes[code] = value;
+        }
 
     }
 
@@ -112,6 +232,41 @@ private:
         huffmanTree = pq.top();
     }
 
+
+    void reconstructHuffmanTree() {
+
+        Node* root = new Node;
+        Node* currentNode;
+
+        // for the readability purposes
+        #define code first
+        #define encodedValue second
+
+        for (auto& huffmanCode : decodingHuffmanCodes) {
+            currentNode = root;
+            for (char currentCodeBit : huffmanCode.code) {
+                if (currentCodeBit == '1') { // goes left
+                    if (currentNode->left == nullptr) {
+                        currentNode->left = new Node;
+                    }
+                    currentNode = currentNode->left;
+                } else if (currentCodeBit == '0') { // goes right
+                    if (currentNode->right == nullptr) {
+                        currentNode->right = new Node;
+                    }
+                    currentNode = currentNode->right;
+                }
+            }
+
+            currentNode->value = huffmanCode.encodedValue;
+        }
+
+        // un define them in order not to mess with other stuff outside this function
+        #undef code
+        #undef encodedValue
+
+        huffmanTree = root;
+    }
 
 
     static void deallocateHuffmanTree(Node*& node) {

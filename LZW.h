@@ -65,6 +65,10 @@ public:
 
         }
 
+        // save last matched word
+        currentWordLength = noOfBits(dictionarySize + 1);
+        bitString += Converter::bits_ToBitString(dictionary[currentMatch] , currentWordLength);
+
         encodedData = Converter::bitString_ToRealBinary(bitString);
         BinaryIO::writeBinaryFile(outputFileName , encodedData);
         bitString.clear();

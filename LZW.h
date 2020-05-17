@@ -9,10 +9,10 @@
 // Number of bits to store number [n] numbers from 0 to n-1
 #ifdef __GNUC__ // If GNU GCC Compiler
     // It is better than log as it has constant time O(1)
-    #define noOfBits(n) (n == 0 ? 0 : (n == 1) ? 1 : (32 - __builtin_clz(n-1)))
+    #define numberOfBits(n) (n == 0 ? 0 : (n == 1) ? 1 : (32 - __builtin_clz(n-1)))
 #else
     #include <cmath>
-    #define noOfBits(n) (n == 0 ? 0 : (n == 1) ? 1 : (int(log2(n-1)) + 1))
+    #define numberOfBits(n) (n == 0 ? 0 : (n == 1) ? 1 : (int(log2(n-1)) + 1))
 #endif
 #define ONE_MEGA_BYTE (1024*1024*8)
 
@@ -22,22 +22,27 @@ class LZW {
 
     unordered_map<string , int> dictionary;
     int dictionarySize;
-    int currentWordLength = 9;
+    int currentWordLength;
 
-public:
-    LZW() {
+
+    void initializeEncodingDictionary() {
+        dictionary.clear();
         for (int i = 0 ; i < 256 ; ++i) {
             string s(1 , i);
             dictionary[s] = i;
         }
         dictionarySize = dictionary.size();
+        currentWordLength = numberOfBits(dictionarySize);
     }
 
+public:
 
-    void encode(const string &filename) {
+    void encode(const string &filename , const string &outputFileName) {
+
+        initializeEncodingDictionary();
 
         string toBeCompressedString = BinaryIO::readBinaryFile(filename);
-        string outputFileName = filename + ".lzw";
+
         remove(outputFileName.c_str()); // remove the file if exists
 
         string currentMatch , bitString , encodedData;
@@ -49,7 +54,7 @@ public:
                 dictionary[currentMatch] = dictionarySize;
                 dictionarySize++;
                 currentMatch.pop_back();
-                currentWordLength = noOfBits(dictionarySize);
+                currentWordLength = numberOfBits(dictionarySize);
                 bitString += Converter::bits_ToBitString(dictionary[currentMatch] , currentWordLength);
                 currentMatch = c;
             }
@@ -57,7 +62,7 @@ public:
             // Save the encoded data until now to free memory
             if (bitString.length() >= ONE_MEGA_BYTE) {
                 int maxLengthFitInBytes = bitString.length() & (~(BYTE - 1u));
-                encodedData = Converter::bitString_ToRealBinary(bitString , 0 , maxLengthFitInBytes);
+                encodedData = Converter::bitString_ToRealBinary(bitString , maxLengthFitInBytes);
                 BinaryIO::writeBinaryFile(outputFileName , encodedData);
                 bitString.erase(0 , maxLengthFitInBytes);
                 encodedData.clear();
@@ -66,7 +71,7 @@ public:
         }
 
         // save last matched word
-        currentWordLength = noOfBits(dictionarySize + 1);
+        currentWordLength = numberOfBits(dictionarySize + 1);
         bitString += Converter::bits_ToBitString(dictionary[currentMatch] , currentWordLength);
 
         encodedData = Converter::bitString_ToRealBinary(bitString);

@@ -79,6 +79,13 @@ namespace Converter {
     }
 
 
+    // Convert the numberOfBits left most bits in toBeConverted to bit string, i.e. '0' , '1' string
+    string bits_ToBitString(unsigned long long toBeConverted , int noOfBits) {
+        string bitString = bitset<8 * BYTE>(toBeConverted).to_string();
+        bitString.erase(0 , 64 - noOfBits);
+        return bitString;
+    }
+
     unsigned int bitString_ToInt(const string &toBeConverted) {
         return bitset<4 * BYTE>(toBeConverted).to_ulong();
     }

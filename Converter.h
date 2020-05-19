@@ -78,6 +78,9 @@ namespace Converter {
         return bitset<2 * BYTE>(toBeConverted).to_string();
     }
 
+    string int32_ToBitString(const int toBeConverted) {
+        return bitset<4 * BYTE>(toBeConverted).to_string();
+    }
 
     // Convert the numberOfBits left most bits in toBeConverted to bit string, i.e. '0' , '1' string
     string bits_ToBitString(unsigned long long toBeConverted , int noOfBits) {

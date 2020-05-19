@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <string>
+#include "Converter.h"
 
 using namespace std;
 
@@ -53,6 +54,19 @@ namespace BinaryIO {
         ofstream output(filename, ios::out | ios::binary | ios::app);
 
         output.write((char*) binaryData.c_str(), binaryData.length());
+
+        output.close();
+    }
+
+    // Append binaryData to the end of the file for integers
+    void writeBinaryFile(const string& filename, int binaryData) {
+
+        string data = Converter::int32_ToBitString(binaryData);
+        data = Converter::bitString_ToRealBinary(data);
+
+        ofstream output(filename, ios::out | ios::binary | ios::app);
+
+        output.write(data.c_str(), data.length());
 
         output.close();
     }

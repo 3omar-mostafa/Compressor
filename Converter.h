@@ -3,6 +3,7 @@
 
 #include <string>
 #include <bitset>
+#include <stdexcept>
 
 #define BYTE 8
 
@@ -28,6 +29,18 @@ namespace Converter {
         return bitString;
     }
     
+
+    unsigned long long string_ToInt64(const string &toBeConverted) {
+        if (toBeConverted.length() > 8)
+            throw invalid_argument("toBeConverted length is bigger than 8 which max size for numbers in bytes");
+
+        string bitString;
+        for (const char c : toBeConverted) {
+            bitString += bitset<BYTE>(c).to_string();
+        }
+
+        return bitset<8 * BYTE>(bitString).to_ullong();
+    }
 
     string bitString_ToRealBinary(const string &toBeConverted) {
         string binaryString;

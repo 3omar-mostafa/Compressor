@@ -20,20 +20,33 @@ using namespace std;
 
 class LZW {
 
-    unordered_map<string , int> dictionary;
+    unordered_map<string , int> encodingDictionary;
+    unordered_map<int , string> decodingDictionary;
     int dictionarySize;
     int currentWordLength;
 
 
     void initializeEncodingDictionary() {
-        dictionary.clear();
+        encodingDictionary.clear();
         for (int i = 0 ; i < 256 ; ++i) {
             string s(1 , i);
-            dictionary[s] = i;
+            encodingDictionary[s] = i;
         }
-        dictionarySize = dictionary.size();
+        dictionarySize = encodingDictionary.size();
         currentWordLength = numberOfBits(dictionarySize);
     }
+
+
+    void initializeDecodingDictionary() {
+        decodingDictionary.clear();
+        for (int i = 0 ; i < 256 ; ++i) {
+            string s(1 , i);
+            decodingDictionary[i] = s;
+        }
+        dictionarySize = decodingDictionary.size();
+        currentWordLength = numberOfBits(dictionarySize);
+    }
+
 
 public:
 
@@ -49,13 +62,13 @@ public:
         for (char c : toBeCompressedString) {
             currentMatch += c;
 
-            // if not found in dictionary
-            if (dictionary.find(currentMatch) == dictionary.end()) {
-                dictionary[currentMatch] = dictionarySize;
+            // if not found in encodingDictionary
+            if (encodingDictionary.find(currentMatch) == encodingDictionary.end()) {
+                encodingDictionary[currentMatch] = dictionarySize;
                 dictionarySize++;
                 currentMatch.pop_back();
                 currentWordLength = numberOfBits(dictionarySize);
-                bitString += Converter::bits_ToBitString(dictionary[currentMatch] , currentWordLength);
+                bitString += Converter::bits_ToBitString(encodingDictionary[currentMatch] , currentWordLength);
                 currentMatch = c;
             }
 
@@ -72,14 +85,56 @@ public:
 
         // save last matched word
         currentWordLength = numberOfBits(dictionarySize + 1);
-        bitString += Converter::bits_ToBitString(dictionary[currentMatch] , currentWordLength);
+        bitString += Converter::bits_ToBitString(encodingDictionary[currentMatch] , currentWordLength);
 
         encodedData = Converter::bitString_ToRealBinary(bitString);
         BinaryIO::writeBinaryFile(outputFileName , encodedData);
         bitString.clear();
 
-        dictionary.clear();
+        encodingDictionary.clear();
     }
+
+    void decode(const string &filename , const string &outputFileName) {
+
+        initializeDecodingDictionary();
+
+        string toBeDecompressed = BinaryIO::readBinaryFile(filename);
+
+        remove(outputFileName.c_str()); // remove the file if exists
+
+        toBeDecompressed = Converter::string_ToBitString(toBeDecompressed);
+
+        string decoded;
+        unsigned int index;
+        for (int i = 0 ; i < toBeDecompressed.length() ; i += currentWordLength) {
+
+            // The left characters are not enough to create a word
+            // i.e. they are garbage to align to bytes
+            if (toBeDecompressed.length() - i < currentWordLength)
+                break;
+
+            currentWordLength = numberOfBits(dictionarySize + 1);
+
+            index = Converter::bitString_ToInt(toBeDecompressed.substr(i , currentWordLength));
+            char lastCharInPreviousEntry = decodingDictionary[index][0];
+
+            if (i != 0)
+                decodingDictionary[dictionarySize - 1] += lastCharInPreviousEntry;
+
+            string out = decodingDictionary[index];
+            decoded += out;
+            decodingDictionary[dictionarySize] = out;
+
+            dictionarySize++;
+
+        }
+
+        BinaryIO::writeBinaryFile(outputFileName , decoded);
+        decodingDictionary.clear();
+
+    }
+
+
 };
 
 

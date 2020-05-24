@@ -22,6 +22,8 @@ public:
 
         ustring toBeEncoded = BinaryIO::readUnsignedBinaryFile(filename);
 
+        toBeEncoded += '\0';
+
         vector<unsigned int> suffixArray = SuffixArray::buildSuffixArray(toBeEncoded);
 
         ustring bwt = generateBWT(toBeEncoded , suffixArray);
@@ -46,6 +48,8 @@ public:
         originalIndex = (int) Converter::string_ToInt64(index);
 
         ustring inverseBWT = BWT::invertBWT(bwt , originalIndex);
+
+        inverseBWT.pop_back(); // remove '\0' which was added at encoding
 
         BinaryIO::writeBinaryFile(outputFileName , inverseBWT);
 

@@ -52,6 +52,25 @@ public:
 
     }
 
+    void decode(const string &filename , const string &outputFileName) {
+
+        ustring toBeDecoded = BinaryIO::readUnsignedBinaryFile(filename);
+        remove(outputFileName.c_str()); // remove the file if exists
+
+        generateSymbols();
+
+        ustring decoded;
+        for (unsigned char index : toBeDecoded) {
+            auto ptr = getValueOfIndex(index);
+            decoded += ptr.value;
+            symbolsList.erase(ptr.iterator);
+            symbolsList.push_front(ptr.value);
+        }
+
+        BinaryIO::writeBinaryFile(outputFileName , decoded);
+
+    }
+
 private:
 
     void generateSymbols() {
@@ -64,6 +83,15 @@ private:
         unsigned int index = 0;
         for (auto iter = symbolsList.begin() ; iter != symbolsList.end() ; ++iter) {
             if (*iter == c)
+                return {iter , index};
+            index++;
+        }
+    }
+
+    Iterator getValueOfIndex(unsigned int requiredIndex) {
+        unsigned int index = 0;
+        for (auto iter = symbolsList.begin() ; iter != symbolsList.end() ; ++iter) {
+            if (index == requiredIndex)
                 return {iter , index};
             index++;
         }

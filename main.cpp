@@ -1,7 +1,7 @@
 #include <iostream>
-#include "LZW.h"
-#include "BWT.h"
-#include "MTF.h"
+#include "Compressors/LZW.h"
+#include "Compressors/BWT/BWT.h"
+#include "Compressors/MTF.h"
 
 void compress(const string& toBeCompressedFilename, const string& outputFilename);
 

@@ -3,7 +3,7 @@
 
 #include <list>
 #include <string>
-#include "BinaryIO.h"
+#include "../Utils/BinaryIO.h"
 
 /**
  * Wrapper around std::list::iterator

@@ -3,8 +3,8 @@
 
 #include <string>
 #include <unordered_map>
-#include "BinaryIO.h"
-#include "Converter.h"
+#include "../Utils/BinaryIO.h"
+#include "../Utils/Converter.h"
 
 // Number of bits to store number [n] numbers from 0 to n-1
 #ifdef __GNUC__ // If GNU GCC Compiler

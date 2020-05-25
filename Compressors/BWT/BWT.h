@@ -1,7 +1,7 @@
 #ifndef BWT_H
 #define BWT_H
 
-#include "BinaryIO.h"
+#include "../../Utils/BinaryIO.h"
 #include "SuffixArray.h"
 #include <algorithm>
 #include <list>

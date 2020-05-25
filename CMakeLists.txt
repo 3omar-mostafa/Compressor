@@ -6,4 +6,20 @@ project(${PROJECT_NAME})
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(${PROJECT_NAME} main.cpp)
+file(GLOB_RECURSE UTILS Utils/*)
+file(GLOB_RECURSE COMPRESSORS Compressors/*)
+
+set(SOURCE_FILES_LIST main.cpp ${UTILS} ${COMPRESSORS})
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES_LIST})
+
+########################################### For Visual Studio ###########################################
+
+# Generate Folder Hierarchy instead of adding all files in the same folder
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE_FILES_LIST})
+
+# Group Cmake predefined projects in CMakePredefinedTargets folder (as ZERO_CHECK , ALL_BUILD)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+# Set this project as startup project
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})

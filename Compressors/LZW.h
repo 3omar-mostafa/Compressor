@@ -8,28 +8,26 @@
 
 // Number of bits to store number [n] numbers from 0 to n-1
 #ifdef __GNUC__ // If GNU GCC Compiler
-    // It is better than log as it has constant time O(1)
-    #define numberOfBits(n) (n == 0 ? 0 : (n == 1) ? 1 : (32 - __builtin_clz(n-1)))
+// It is better than log as it has constant time O(1)
+#define numberOfBits(n) (n == 0 ? 0 : (n == 1) ? 1 : (32 - __builtin_clz(n-1)))
 #else
-    #include <cmath>
-    #define numberOfBits(n) (n == 0 ? 0 : (n == 1) ? 1 : (int(log2(n-1)) + 1))
+#include <cmath>
+#define numberOfBits(n) (n == 0 ? 0 : (n == 1) ? 1 : (int(log2(n-1)) + 1))
 #endif
 #define ONE_MEGA_BYTE (1024*1024*8)
 
-using namespace std;
-
 class LZW {
 
-    unordered_map<string , int> encodingDictionary;
-    unordered_map<int , string> decodingDictionary;
+    std::unordered_map<std::string, int> encodingDictionary;
+    std::unordered_map<int, std::string> decodingDictionary;
     int dictionarySize;
     int currentWordLength;
 
 
     void initializeEncodingDictionary() {
         encodingDictionary.clear();
-        for (int i = 0 ; i < 256 ; ++i) {
-            string s(1 , i);
+        for (int i = 0; i < 256; ++i) {
+            std::string s(1, i);
             encodingDictionary[s] = i;
         }
         dictionarySize = encodingDictionary.size();
@@ -39,8 +37,8 @@ class LZW {
 
     void initializeDecodingDictionary() {
         decodingDictionary.clear();
-        for (int i = 0 ; i < 256 ; ++i) {
-            string s(1 , i);
+        for (int i = 0; i < 256; ++i) {
+            std::string s(1, i);
             decodingDictionary[i] = s;
         }
         dictionarySize = decodingDictionary.size();
@@ -50,15 +48,15 @@ class LZW {
 
 public:
 
-    void encode(const string &filename , const string &outputFileName) {
+    void encode(const std::string& filename, const std::string& outputFileName) {
 
         initializeEncodingDictionary();
 
-        string toBeCompressedString = BinaryIO::readBinaryFile(filename);
+        std::string toBeCompressedString = BinaryIO::readBinaryFile(filename);
 
         remove(outputFileName.c_str()); // remove the file if exists
 
-        string currentMatch , bitString , encodedData;
+        std::string currentMatch, bitString, encodedData;
         for (char c : toBeCompressedString) {
             currentMatch += c;
 
@@ -68,16 +66,16 @@ public:
                 dictionarySize++;
                 currentMatch.pop_back();
                 currentWordLength = numberOfBits(dictionarySize);
-                bitString += Converter::bits_ToBitString(encodingDictionary[currentMatch] , currentWordLength);
+                bitString += Converter::bits_ToBitString(encodingDictionary[currentMatch], currentWordLength);
                 currentMatch = c;
             }
 
             // Save the encoded data until now to free memory
             if (bitString.length() >= ONE_MEGA_BYTE) {
                 int maxLengthFitInBytes = bitString.length() & (~(BYTE - 1u));
-                encodedData = Converter::bitString_ToRealBinary(bitString , maxLengthFitInBytes);
-                BinaryIO::writeBinaryFile(outputFileName , encodedData);
-                bitString.erase(0 , maxLengthFitInBytes);
+                encodedData = Converter::bitString_ToRealBinary(bitString, maxLengthFitInBytes);
+                BinaryIO::writeBinaryFile(outputFileName, encodedData);
+                bitString.erase(0, maxLengthFitInBytes);
                 encodedData.clear();
             }
 
@@ -85,28 +83,28 @@ public:
 
         // save last matched word
         currentWordLength = numberOfBits(dictionarySize + 1);
-        bitString += Converter::bits_ToBitString(encodingDictionary[currentMatch] , currentWordLength);
+        bitString += Converter::bits_ToBitString(encodingDictionary[currentMatch], currentWordLength);
 
         encodedData = Converter::bitString_ToRealBinary(bitString);
-        BinaryIO::writeBinaryFile(outputFileName , encodedData);
+        BinaryIO::writeBinaryFile(outputFileName, encodedData);
         bitString.clear();
 
         encodingDictionary.clear();
     }
 
-    void decode(const string &filename , const string &outputFileName) {
+    void decode(const std::string& filename, const std::string& outputFileName) {
 
         initializeDecodingDictionary();
 
-        string toBeDecompressed = BinaryIO::readBinaryFile(filename);
+        std::string toBeDecompressed = BinaryIO::readBinaryFile(filename);
 
         remove(outputFileName.c_str()); // remove the file if exists
 
         toBeDecompressed = Converter::string_ToBitString(toBeDecompressed);
 
-        string decoded;
+        std::string decoded;
         unsigned int index;
-        for (int i = 0 ; i < toBeDecompressed.length() ; i += currentWordLength) {
+        for (int i = 0; i < toBeDecompressed.length(); i += currentWordLength) {
 
             // The left characters are not enough to create a word
             // i.e. they are garbage to align to bytes
@@ -115,13 +113,13 @@ public:
 
             currentWordLength = numberOfBits(dictionarySize + 1);
 
-            index = Converter::bitString_ToInt(toBeDecompressed.substr(i , currentWordLength));
+            index = Converter::bitString_ToInt(toBeDecompressed.substr(i, currentWordLength));
             char lastCharInPreviousEntry = decodingDictionary[index][0];
 
             if (i != 0)
                 decodingDictionary[dictionarySize - 1] += lastCharInPreviousEntry;
 
-            string out = decodingDictionary[index];
+            std::string out = decodingDictionary[index];
             decoded += out;
             decodingDictionary[dictionarySize] = out;
 
@@ -129,7 +127,7 @@ public:
 
         }
 
-        BinaryIO::writeBinaryFile(outputFileName , decoded);
+        BinaryIO::writeBinaryFile(outputFileName, decoded);
         decodingDictionary.clear();
 
     }

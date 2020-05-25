@@ -3,58 +3,55 @@
 #include "Compressors/BWT/BWT.h"
 #include "Compressors/MTF.h"
 
-void compress(const string& toBeCompressedFilename, const string& outputFilename);
+void compress(const std::string& toBeCompressedFilename, const std::string& outputFilename);
 
-void decompress(const string& toBeDecompressedFilename, const string& outputFilename);
-
-using namespace std;
-
+void decompress(const std::string& toBeDecompressedFilename, const std::string& outputFilename);
 
 int main() {
 
-    cout << "Welcome to Compressor!\n";
-    cout << "_______________________________________\n";
-    cout << "Choose a mode : a) encode     b) decode \n";
+    std::cout << "Welcome to Compressor!\n";
+    std::cout << "_______________________________________\n";
+    std::cout << "Choose a mode : a) encode     b) decode \n";
 
-    string mode;
+    std::string mode;
 
     while (true) {
-        cin >> mode;
+        std::cin >> mode;
         if (mode == "a" || mode == "encode" || mode == "e" || mode == "b" || mode == "decode" || mode == "d")
             break;
-        cout << "Please enter a valid mode" << endl
-             << "Type 'a' or 'encode' or 'e' [without quotes] to select encoding for example" << endl;
+        std::cout << "Please enter a valid mode" << std::endl
+                  << "Type 'a' or 'encode' or 'e' [without quotes] to select encoding for example" << std::endl;
     }
 
     if (mode == "a" || mode == "encode" || mode == "e") {
-        string toBeCompressedFilename, outputFilename;
+        std::string toBeCompressedFilename, outputFilename;
 
-        cout << "Please enter path to the file you want to encode:\n";
-        cin >> toBeCompressedFilename;
-        cout << "Please enter path to the output file including its name and extension:\n";
-        cin >> outputFilename;
+        std::cout << "Please enter path to the file you want to encode:\n";
+        std::cin >> toBeCompressedFilename;
+        std::cout << "Please enter path to the output file including its name and extension:\n";
+        std::cin >> outputFilename;
 
         compress(toBeCompressedFilename, outputFilename);
 
-        cout << "Finished encoding\nThank you";
+        std::cout << "Finished encoding\nThank you";
     } else {
 
-        string toBeDecompressedFilename, outputFilename;
+        std::string toBeDecompressedFilename, outputFilename;
 
-        cout << "Please enter path to the file you want to decode:\n";
-        cin >> toBeDecompressedFilename;
-        cout << "Please enter path to the output file including its name and extension:\n";
-        cin >> outputFilename;
+        std::cout << "Please enter path to the file you want to decode:\n";
+        std::cin >> toBeDecompressedFilename;
+        std::cout << "Please enter path to the output file including its name and extension:\n";
+        std::cin >> outputFilename;
 
         decompress(toBeDecompressedFilename, outputFilename);
 
-        cout << "Finished decoding\nThank you";
+        std::cout << "Finished decoding\nThank you";
     }
 
     return 0;
 }
 
-void compress(const string& toBeCompressedFilename, const string& outputFilename) {
+void compress(const std::string& toBeCompressedFilename, const std::string& outputFilename) {
 
     BWT bwt;
     bwt.encode(toBeCompressedFilename, outputFilename);
@@ -68,7 +65,7 @@ void compress(const string& toBeCompressedFilename, const string& outputFilename
 }
 
 
-void decompress(const string& toBeDecompressedFilename, const string& outputFilename) {
+void decompress(const std::string& toBeDecompressedFilename, const std::string& outputFilename) {
 
     LZW lzw;
     lzw.decode(toBeDecompressedFilename, outputFilename);

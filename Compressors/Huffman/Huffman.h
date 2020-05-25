@@ -14,26 +14,24 @@
 
 #define ONE_MEGA_BYTE (1024*1024*8)
 
-using namespace std;
-
 
 class Huffman {
 
-    map<char, string> encodingHuffmanCodes;
-    map<string, char> decodingHuffmanCodes;
-    map<char, int> frequencies;
+    std::map<char, std::string> encodingHuffmanCodes;
+    std::map<std::string, char> decodingHuffmanCodes;
+    std::map<char, int> frequencies;
     Node* huffmanTree = nullptr;
-    const string fileSignature = "!huf_omar"; // to determine the  type of this file
-    const string fileExtension = ".omar";
+    const std::string fileSignature = "!huf_omar"; // to determine the  type of this file
+    const std::string fileExtension = ".omar";
 
 public:
 
-    void compress(const string& filename) {
+    void compress(const std::string& filename) {
 
-        string outputFileName = filename + fileExtension;
+        std::string outputFileName = filename + fileExtension;
         remove(outputFileName.c_str()); // remove the file if exists
 
-        string toBeCompressedString = BinaryIO::readBinaryFile(filename);
+        std::string toBeCompressedString = BinaryIO::readBinaryFile(filename);
 
         generateFrequencies(toBeCompressedString);
         buildHuffmanTree();
@@ -42,7 +40,7 @@ public:
         deallocateHuffmanTree(huffmanTree); // release memory
         frequencies.clear(); // release memory
 
-        string binaryFileHeader = Converter::bitString_ToRealBinary(generateFileHeader());
+        std::string binaryFileHeader = Converter::bitString_ToRealBinary(generateFileHeader());
 
         BinaryIO::writeBinaryFile(outputFileName, binaryFileHeader);
 
@@ -54,12 +52,12 @@ public:
     }
 
 
-    void decompress(const string& filename) {
+    void decompress(const std::string& filename) {
 
-        string compressedData = BinaryIO::readBinaryFile(filename);
+        std::string compressedData = BinaryIO::readBinaryFile(filename);
 
         if (compressedData.substr(0, fileSignature.length()) != fileSignature) {
-            throw domain_error("Wrong File Type");
+            throw std::domain_error("Wrong File Type");
         }
 
         reconstructHuffmanCodes(compressedData);
@@ -70,7 +68,7 @@ public:
 
         compressedData.erase(0, fileHeaderSizeInBytes); // file header is no longer needed so we can release memory
 
-        string outputFileName = filename + ".decoded";
+        std::string outputFileName = filename + ".decoded";
         remove(outputFileName.c_str()); // remove the file if exists
 
         decode(compressedData, outputFileName);
@@ -86,10 +84,10 @@ public:
 
 private:
 
-    void decode(const string& toBeDecoded, const string& outputFileName) {
+    void decode(const std::string& toBeDecoded, const std::string& outputFileName) {
 
-        string toBeDecodedBinaryString;
-        string decodedData, currentCode;
+        std::string toBeDecodedBinaryString;
+        std::string decodedData, currentCode;
         Node* currentNode = huffmanTree;
 
         int positionCompressedData = 0;
@@ -142,22 +140,21 @@ private:
     }
 
 
-    unsigned int decodeFileHeaderSizeInBits(const string& compressedFileData) {
+    unsigned int decodeFileHeaderSizeInBits(const std::string& compressedFileData) {
 
         int sizeOfFileHeaderSize = 2; // 2 bytes is the size of the (file header size)
 
-        string headerFileSize = Converter::string_ToBitString(
+        std::string headerFileSize = Converter::string_ToBitString(
                 compressedFileData, fileSignature.length(), sizeOfFileHeaderSize);
 
         return Converter::bitString_ToInt(headerFileSize);
     }
 
 
-    void generateHuffmanCodes(Node*& node, const string& code = "") {
+    void generateHuffmanCodes(Node*& node, const std::string& code = "") {
         if (node == nullptr)
             return;
 
-        // if leaf
         if (node->isLeaf()) {
             encodingHuffmanCodes[node->value] = code;
             return;
@@ -170,7 +167,7 @@ private:
 
 
     // Read the file Header and construct the Huffman Codes Dictionary
-    void reconstructHuffmanCodes(const string& compressedFileData) {
+    void reconstructHuffmanCodes(const std::string& compressedFileData) {
 
         int fileHeaderSize = decodeFileHeaderSizeInBits(compressedFileData);
 
@@ -181,7 +178,7 @@ private:
         int dictionaryStartIndex = smallestCodeLengthIndex + 1;
         int dictionaryLengthInBits = fileHeaderSize - (dictionaryStartIndex * BYTE);
 
-        string dictionaryBits = Converter::string_ToBitString(
+        std::string dictionaryBits = Converter::string_ToBitString(
                 compressedFileData, dictionaryStartIndex, dictionaryLengthInBits / BYTE + 1);
 
         // if the header does not fit in bytes, i.e. there are extra bits which does not belong to it
@@ -192,7 +189,7 @@ private:
 
         int codeLength = smallestCodeLength;
         char value;
-        string code;
+        std::string code;
         for (int i = 0; i < dictionaryLengthInBits;) {
             value = Converter::bitString_ToRealBinary(dictionaryBits, i, BYTE)[0];
             i += BYTE;
@@ -207,7 +204,7 @@ private:
 
 
     void buildHuffmanTree() {
-        priority_queue<Node*, vector<Node*>, Node::Compare> pq;
+        std::priority_queue<Node*, std::vector<Node*>, Node::Compare> pq;
 
         // for the readability purposes
         #define key first
@@ -287,7 +284,7 @@ private:
     }
 
 
-    void generateFrequencies(const string& input) {
+    void generateFrequencies(const std::string& input) {
         for (char currentChar : input) {
             frequencies[currentChar]++;
         }
@@ -295,15 +292,15 @@ private:
 
 
     struct StringCompare {
-        bool operator ()(const string& s1, const string& s2) {
+        bool operator ()(const std::string& s1, const std::string& s2) {
             return s1.length() == s2.length() ? s1 < s2 : s1.length() < s2.length();
         }
     };
 
 
-    map<string, char, StringCompare> getSortedHuffmanCodes() {
+    std::map<std::string, char, StringCompare> getSortedHuffmanCodes() {
 
-        map<string, char, StringCompare> sortedHuffmanCodes;
+        std::map<std::string, char, StringCompare> sortedHuffmanCodes;
 
         #define encodedValue first
         #define code second
@@ -320,13 +317,13 @@ private:
     }
 
 
-    string generateFileHeaderDictionary() {
+    std::string generateFileHeaderDictionary() {
         #define code first
         #define encodedValue second
 
-        string dictionary;
+        std::string dictionary;
 
-        map<string, char, StringCompare> sortedHuffmanCodes = getSortedHuffmanCodes();
+        std::map<std::string, char, StringCompare> sortedHuffmanCodes = getSortedHuffmanCodes();
 
         // the smallest code length is at sortedHuffmanCodes.begin() because it is sorted.
         int smallestCodeLength = sortedHuffmanCodes.begin()->code.length();
@@ -342,7 +339,7 @@ private:
             dictionary += Converter::int8_ToBitString(huffmanCode.encodedValue);
 
             currentCodeLength = huffmanCode.code.length();
-            dictionary += to_string(currentCodeLength - previousCodeLength); // The difference is 0 or 1 ONLY
+            dictionary += std::to_string(currentCodeLength - previousCodeLength); // The difference is 0 or 1 ONLY
             previousCodeLength = currentCodeLength;
 
             dictionary += huffmanCode.code;
@@ -355,18 +352,18 @@ private:
     }
 
 
-    string generateFileHeader() {
-        string fileHeader;
+    std::string generateFileHeader() {
+        std::string fileHeader;
 
         fileHeader = Converter::string_ToBitString(fileSignature);
 
-        string dictionary = generateFileHeaderDictionary();
+        std::string dictionary = generateFileHeaderDictionary();
 
         //  2 * BYTE is the size of "fileHeaderSize" itself as it is added to the header
         short fileHeaderSize = fileHeader.length() + 2 * BYTE + dictionary.length();
 
         // File Header Size in bits (it is 2 Bytes -> max of 8KB header)
-        string fileHeaderSizeInBits = Converter::int16_ToBitString(fileHeaderSize);
+        std::string fileHeaderSizeInBits = Converter::int16_ToBitString(fileHeaderSize);
 
         fileHeader += fileHeaderSizeInBits;
         fileHeader += dictionary;
@@ -375,8 +372,8 @@ private:
     }
 
 
-    void encode(const string& toBeCompressedString, const string& outputFileName) {
-        string encodedString, encodedData;
+    void encode(const std::string& toBeCompressedString, const std::string& outputFileName) {
+        std::string encodedString, encodedData;
 
         for (char c : toBeCompressedString) {
             encodedString += encodingHuffmanCodes[c];
@@ -397,12 +394,12 @@ private:
     }
 
 
-    static void exportLastByteSize(const string& encodedString, const string& outputFileName) {
+    static void exportLastByteSize(const std::string& encodedString, const std::string& outputFileName) {
         int maxLengthDivisibleByBlockSize = encodedString.length() & (~(BYTE - 1));
 
         int lastByteSize = encodedString.length() - maxLengthDivisibleByBlockSize;
 
-        string binary = Converter::int8_ToBitString(lastByteSize);
+        std::string binary = Converter::int8_ToBitString(lastByteSize);
 
         binary = Converter::bitString_ToRealBinary(binary);
 

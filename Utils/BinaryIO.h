@@ -5,32 +5,30 @@
 #include <string>
 #include "Converter.h"
 
-using namespace std;
-
 namespace BinaryIO {
 
-    typedef basic_string<unsigned char> ustring;
+    typedef std::basic_string<unsigned char> ustring;
 
-    string readBinaryFile(const string& filename) {
-        ifstream input(filename, ios::in | ios::binary);
-        string fileData;
+    std::string readBinaryFile(const std::string& filename) {
+        std::ifstream input(filename, std::ios::in | std::ios::binary);
+        std::string fileData;
         if (input) {
-            input.seekg(0, ios::end);
+            input.seekg(0, std::ios::end);
             fileData.resize(input.tellg());
-            input.seekg(0, ios::beg);
+            input.seekg(0, std::ios::beg);
             input.read(&fileData[0], fileData.size());
             input.close();
         }
         return fileData;
     }
 
-    ustring readUnsignedBinaryFile(const string& filename) {
-        ifstream input(filename, ios::in | ios::binary);
+    ustring readUnsignedBinaryFile(const std::string& filename) {
+        std::ifstream input(filename, std::ios::in | std::ios::binary);
         ustring fileData;
         if (input) {
-            input.seekg(0, ios::end);
+            input.seekg(0, std::ios::end);
             fileData.resize(input.tellg());
-            input.seekg(0, ios::beg);
+            input.seekg(0, std::ios::beg);
             input.read((char*) (&fileData[0]), fileData.size());
             input.close();
         }
@@ -39,9 +37,9 @@ namespace BinaryIO {
 
 
     // Append binaryData to the end of the file for strings
-    void writeBinaryFile(const string& filename, const string& binaryData) {
+    void writeBinaryFile(const std::string& filename, const std::string& binaryData) {
 
-        ofstream output(filename, ios::out | ios::binary | ios::app);
+        std::ofstream output(filename, std::ios::out | std::ios::binary | std::ios::app);
 
         output.write(binaryData.c_str(), binaryData.length());
 
@@ -49,9 +47,9 @@ namespace BinaryIO {
     }
 
     // Append binaryData to the end of the file for unsigned strings
-    void writeBinaryFile(const string& filename, const ustring& binaryData) {
+    void writeBinaryFile(const std::string& filename, const ustring& binaryData) {
 
-        ofstream output(filename, ios::out | ios::binary | ios::app);
+        std::ofstream output(filename, std::ios::out | std::ios::binary | std::ios::app);
 
         output.write((char*) binaryData.c_str(), binaryData.length());
 
@@ -59,12 +57,12 @@ namespace BinaryIO {
     }
 
     // Append binaryData to the end of the file for integers
-    void writeBinaryFile(const string& filename, int binaryData) {
+    void writeBinaryFile(const std::string& filename, int binaryData) {
 
-        string data = Converter::int32_ToBitString(binaryData);
+        std::string data = Converter::int32_ToBitString(binaryData);
         data = Converter::bitString_ToRealBinary(data);
 
-        ofstream output(filename, ios::out | ios::binary | ios::app);
+        std::ofstream output(filename, std::ios::out | std::ios::binary | std::ios::app);
 
         output.write(data.c_str(), data.length());
 

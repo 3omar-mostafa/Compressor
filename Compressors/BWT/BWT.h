@@ -10,7 +10,6 @@
  * Burrows - Wheeler Transform
  */
 class BWT {
-    typedef std::basic_string<unsigned char> ustring;
 
     int originalIndex = 0;
 
@@ -20,13 +19,13 @@ public:
 
         remove(outputFileName.c_str()); // remove the file if exists
 
-        ustring toBeEncoded = BinaryIO::readUnsignedBinaryFile(filename);
+        std::string toBeEncoded = BinaryIO::readBinaryFile(filename);
 
         toBeEncoded += '\0';
 
         std::vector<unsigned int> suffixArray = SuffixArray::buildSuffixArray(toBeEncoded);
 
-        ustring bwt = generateBWT(toBeEncoded, suffixArray);
+        std::string bwt = generateBWT(toBeEncoded, suffixArray);
 
         BinaryIO::writeBinaryFile(outputFileName, bwt);
 
@@ -35,19 +34,19 @@ public:
 
     void decode(const std::string& filename, const std::string& outputFileName) {
 
-        ustring bwt = BinaryIO::readUnsignedBinaryFile(filename);
         remove(outputFileName.c_str()); // remove the file if exists
+        std::string bwt = BinaryIO::readBinaryFile(filename);
 
         std::string index;
 
-        for (int i = 0; i < sizeof(int); ++i) {
+        for (int i = 0; i < sizeof(originalIndex); ++i) {
             index.insert(0, 1, bwt.back());
             bwt.pop_back();
         }
 
         originalIndex = (int) Converter::string_ToInt64(index);
 
-        ustring inverseBWT = BWT::invertBWT(bwt, originalIndex);
+        std::string inverseBWT = BWT::invertBWT(bwt, originalIndex);
 
         inverseBWT.pop_back(); // remove '\0' which was added at encoding
 
@@ -63,10 +62,10 @@ private:
     }
 
     // Generate Burrows - Wheeler Transform of given text
-    ustring generateBWT(const ustring& input, std::vector<unsigned int>& suffixArray) {
+    std::string generateBWT(const std::string& input, std::vector<unsigned int>& suffixArray) {
         // Iterates over the suffix array to find
         // the last char of each cyclic rotation
-        ustring bwtLastColumn;
+        std::string bwtLastColumn;
 
         int n = input.length();
         for (int i = 0; i < suffixArray.size(); ++i) {
@@ -86,14 +85,17 @@ private:
         return bwtLastColumn;
     }
 
+    static bool unsignedCharsCompare(const char c1, const char c2) {
+        return (unsigned char) c1 < (unsigned char) c2;
+    }
 
-    static ustring invertBWT(const ustring& BWT, long long x) {
+    static std::string invertBWT(const std::string& BWT, long long index) {
         int length = BWT.length();
-        ustring sortedBWT = BWT;
+        std::string sortedBWT = BWT;
         int* leftShift = new int[length];
 
         // Sorts the characters of BWT[] alphabetically
-        std::sort(sortedBWT.begin(), sortedBWT.end());
+        std::sort(sortedBWT.begin(), sortedBWT.end(), unsignedCharsCompare);
 
         // Array of pointers that act as head nodes
         // to linked lists created to compute leftShift[]
@@ -104,21 +106,21 @@ private:
         // whose data part contains index at which
         // character occurs in BWT[]
         for (int i = 0; i < length; i++) {
-            arr[BWT[i]].push_back(i);
+            arr[(unsigned char) BWT[i]].push_back(i);
         }
 
         // Takes each distinct character of sorted_arr[] as head
         // of a linked list and finds leftShift[]
         for (int i = 0; i < length; i++) {
-            computeLeftShift(arr[sortedBWT[i]], i, leftShift);
+            computeLeftShift(arr[(unsigned char) sortedBWT[i]], i, leftShift);
         }
 
-        ustring inverseBWT;
+        std::string inverseBWT;
 
         // Decodes the bwt
         for (int i = 0; i < length; i++) {
-            x = leftShift[x];
-            inverseBWT += BWT[x];
+            index = leftShift[index];
+            inverseBWT += BWT[index];
         }
 
         delete[] leftShift;

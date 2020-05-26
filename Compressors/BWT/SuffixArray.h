@@ -24,14 +24,12 @@ struct suffix {
  */
 class SuffixArray {
 
-    typedef std::basic_string<unsigned char> ustring;
-
 public:
 
-    static std::vector<unsigned int> buildSuffixArray(const ustring& inputString) {
+    static std::vector<unsigned int> buildSuffixArray(const std::string& inputString) {
         int length = inputString.length();
 
-        suffix* suffixes = new suffix[length];
+        auto* suffixes = new suffix[length];
 
         // Store suffixes and their indexes in an array of structures.
         // The structure is needed to sort the suffixes lexicographically
@@ -39,7 +37,7 @@ public:
         for (int i = 0; i < length; i++) {
             suffixes[i].index = i;
             suffixes[i].rank[0] = inputString[i];
-            suffixes[i].rank[1] = ((i + 1) < length) ? (inputString[i + 1]) : -1;
+            suffixes[i].rank[1] = ((i + 1) < length) ? (inputString[i + 1]) : UINT32_MAX;
         }
 
         std::sort(suffixes, suffixes + length);

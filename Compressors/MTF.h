@@ -26,20 +26,18 @@ struct Iterator {
  */
 class MTF {
 
-    typedef std::basic_string<unsigned char> ustring;
-
     std::list<unsigned char> symbolsList;
 
 public:
 
     void encode(const std::string& filename, const std::string& outputFileName) {
 
-        ustring toBeEncoded = BinaryIO::readUnsignedBinaryFile(filename);
+        std::string toBeEncoded = BinaryIO::readBinaryFile(filename);
         remove(outputFileName.c_str()); // remove the file if exists
 
         generateSymbols();
 
-        ustring encoded;
+        std::string encoded;
 
         for (unsigned char symbol : toBeEncoded) {
             auto ptr = getIndexOfValue(symbol);
@@ -54,12 +52,12 @@ public:
 
     void decode(const std::string& filename, const std::string& outputFileName) {
 
-        ustring toBeDecoded = BinaryIO::readUnsignedBinaryFile(filename);
+        std::string toBeDecoded = BinaryIO::readBinaryFile(filename);
         remove(outputFileName.c_str()); // remove the file if exists
 
         generateSymbols();
 
-        ustring decoded;
+        std::string decoded;
         for (unsigned char index : toBeDecoded) {
             auto ptr = getValueOfIndex(index);
             decoded += ptr.value;

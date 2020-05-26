@@ -52,7 +52,7 @@ public:
 
         initializeEncodingDictionary();
 
-        std::string toBeCompressedString = BinaryIO::readBinaryFile(filename);
+        std::string toBeCompressedString = BinaryIO::read(filename);
 
         remove(outputFileName.c_str()); // remove the file if exists
 
@@ -74,7 +74,7 @@ public:
             if (bitString.length() >= ONE_MEGA_BYTE) {
                 int maxLengthFitInBytes = bitString.length() & (~(BYTE - 1u));
                 encodedData = Converter::bitString_ToRealBinary(bitString, maxLengthFitInBytes);
-                BinaryIO::writeBinaryFile(outputFileName, encodedData);
+                BinaryIO::write(outputFileName, encodedData);
                 bitString.erase(0, maxLengthFitInBytes);
                 encodedData.clear();
             }
@@ -86,7 +86,7 @@ public:
         bitString += Converter::bits_ToBitString(encodingDictionary[currentMatch], currentWordLength);
 
         encodedData = Converter::bitString_ToRealBinary(bitString);
-        BinaryIO::writeBinaryFile(outputFileName, encodedData);
+        BinaryIO::write(outputFileName, encodedData);
         bitString.clear();
 
         encodingDictionary.clear();
@@ -96,7 +96,7 @@ public:
 
         initializeDecodingDictionary();
 
-        std::string toBeDecompressed = BinaryIO::readBinaryFile(filename);
+        std::string toBeDecompressed = BinaryIO::read(filename);
 
         remove(outputFileName.c_str()); // remove the file if exists
 
@@ -127,7 +127,7 @@ public:
 
         }
 
-        BinaryIO::writeBinaryFile(outputFileName, decoded);
+        BinaryIO::write(outputFileName, decoded);
         decodingDictionary.clear();
 
     }

@@ -19,7 +19,7 @@ public:
 
         remove(outputFileName.c_str()); // remove the file if exists
 
-        std::string toBeEncoded = BinaryIO::readBinaryFile(filename);
+        std::string toBeEncoded = BinaryIO::read(filename);
 
         toBeEncoded += '\0';
 
@@ -27,15 +27,15 @@ public:
 
         std::string bwt = generateBWT(toBeEncoded, suffixArray);
 
-        BinaryIO::writeBinaryFile(outputFileName, bwt);
+        BinaryIO::write(outputFileName, bwt);
 
-        BinaryIO::writeBinaryFile(outputFileName, originalIndex);
+        BinaryIO::write(outputFileName, originalIndex);
     }
 
     void decode(const std::string& filename, const std::string& outputFileName) {
 
         remove(outputFileName.c_str()); // remove the file if exists
-        std::string bwt = BinaryIO::readBinaryFile(filename);
+        std::string bwt = BinaryIO::read(filename);
 
         std::string index;
 
@@ -50,7 +50,7 @@ public:
 
         inverseBWT.pop_back(); // remove '\0' which was added at encoding
 
-        BinaryIO::writeBinaryFile(outputFileName, inverseBWT);
+        BinaryIO::write(outputFileName, inverseBWT);
 
     }
 

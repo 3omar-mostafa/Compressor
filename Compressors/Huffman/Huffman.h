@@ -31,7 +31,7 @@ public:
         std::string outputFileName = filename + fileExtension;
         remove(outputFileName.c_str()); // remove the file if exists
 
-        std::string toBeCompressedString = BinaryIO::readBinaryFile(filename);
+        std::string toBeCompressedString = BinaryIO::read(filename);
 
         generateFrequencies(toBeCompressedString);
         buildHuffmanTree();
@@ -42,7 +42,7 @@ public:
 
         std::string binaryFileHeader = Converter::bitString_ToRealBinary(generateFileHeader());
 
-        BinaryIO::writeBinaryFile(outputFileName, binaryFileHeader);
+        BinaryIO::write(outputFileName, binaryFileHeader);
 
         binaryFileHeader.clear(); // release memory
 
@@ -54,7 +54,7 @@ public:
 
     void decompress(const std::string& filename) {
 
-        std::string compressedData = BinaryIO::readBinaryFile(filename);
+        std::string compressedData = BinaryIO::read(filename);
 
         if (compressedData.substr(0, fileSignature.length()) != fileSignature) {
             throw std::domain_error("Wrong File Type");
@@ -127,14 +127,14 @@ private:
 
             // exports the decoded data until now to free some memory
             if (decodedData.length() >= ONE_MEGA_BYTE) {
-                BinaryIO::writeBinaryFile(outputFileName, decodedData);
+                BinaryIO::write(outputFileName, decodedData);
                 decodedData.clear();
             }
 
         } while (positionCompressedData < toBeDecoded.length());
 
         if (!decodedData.empty()) {
-            BinaryIO::writeBinaryFile(outputFileName, decodedData);
+            BinaryIO::write(outputFileName, decodedData);
         }
 
     }
@@ -384,12 +384,12 @@ private:
 
                 encodedData = Converter::bitString_ToRealBinary(encodedString, maxLengthDivisibleByBlockSize);
                 encodedString.erase(0, maxLengthDivisibleByBlockSize);
-                BinaryIO::writeBinaryFile(outputFileName, encodedData);
+                BinaryIO::write(outputFileName, encodedData);
             }
         }
 
         encodedData = Converter::bitString_ToRealBinary(encodedString);
-        BinaryIO::writeBinaryFile(outputFileName, encodedData);
+        BinaryIO::write(outputFileName, encodedData);
         exportLastByteSize(encodedString, outputFileName);
     }
 
@@ -403,7 +403,7 @@ private:
 
         binary = Converter::bitString_ToRealBinary(binary);
 
-        BinaryIO::writeBinaryFile(outputFileName, binary);
+        BinaryIO::write(outputFileName, binary);
     }
 
 

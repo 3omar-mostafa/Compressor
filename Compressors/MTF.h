@@ -32,7 +32,7 @@ public:
 
     void encode(const std::string& filename, const std::string& outputFileName) {
 
-        std::string toBeEncoded = BinaryIO::readBinaryFile(filename);
+        std::string toBeEncoded = BinaryIO::read(filename);
         remove(outputFileName.c_str()); // remove the file if exists
 
         generateSymbols();
@@ -46,13 +46,13 @@ public:
             symbolsList.push_front(symbol);
         }
 
-        BinaryIO::writeBinaryFile(outputFileName, encoded);
+        BinaryIO::write(outputFileName, encoded);
 
     }
 
     void decode(const std::string& filename, const std::string& outputFileName) {
 
-        std::string toBeDecoded = BinaryIO::readBinaryFile(filename);
+        std::string toBeDecoded = BinaryIO::read(filename);
         remove(outputFileName.c_str()); // remove the file if exists
 
         generateSymbols();
@@ -65,7 +65,7 @@ public:
             symbolsList.push_front(ptr.value);
         }
 
-        BinaryIO::writeBinaryFile(outputFileName, decoded);
+        BinaryIO::write(outputFileName, decoded);
 
     }
 

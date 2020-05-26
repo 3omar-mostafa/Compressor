@@ -86,6 +86,7 @@ private:
                 return {iter, index};
             index++;
         }
+        return {std::list<unsigned char>::const_iterator(), 0};
     }
 
     Iterator getValueOfIndex(unsigned int requiredIndex) {
@@ -95,6 +96,7 @@ private:
                 return {iter, index};
             index++;
         }
+        return {std::list<unsigned char>::const_iterator(), 0};
     }
 
 

@@ -2,9 +2,8 @@
 #define HUFFMAN_H
 
 #include <queue>
-#include <map>
 #include <unordered_map>
-#include <stdexcept>
+#include <functional>
 
 #include "Node.h"
 #include "../../Utils/Converter.h"
@@ -12,198 +11,167 @@
 
 #define BYTE 8
 
-#define ONE_MEGA_BYTE (1024*1024*8)
-
-
 class Huffman {
-
-    std::map<char, std::string> encodingHuffmanCodes;
-    std::map<std::string, char> decodingHuffmanCodes;
-    std::map<char, int> frequencies;
-    Node* huffmanTree = nullptr;
-    const std::string fileSignature = "!huf_omar"; // to determine the  type of this file
-    const std::string fileExtension = ".omar";
 
 public:
 
-    void compress(const std::string& filename) {
+    static void encode(const std::string& filename, const std::string& outputFileName) {
 
-        std::string outputFileName = filename + fileExtension;
-        remove(outputFileName.c_str()); // remove the file if exists
+        std::string toBeEncoded = BinaryIO::read(filename);
 
-        std::string toBeCompressedString = BinaryIO::read(filename);
-
-        generateFrequencies(toBeCompressedString);
-        buildHuffmanTree();
-        generateHuffmanCodes(huffmanTree);
+        auto frequencies = generateFrequencies(toBeEncoded);
+        Node* huffmanTree = buildHuffmanTree(frequencies);
+        auto huffmanCodes = generateHuffmanCodes(huffmanTree);
 
         deallocateHuffmanTree(huffmanTree); // release memory
         frequencies.clear(); // release memory
 
-        std::string binaryFileHeader = Converter::bitString_ToRealBinary(generateFileHeader());
+        std::string binaryFileHeader = Converter::bitString_ToRealBinary(generateFileHeader(huffmanCodes));
 
         BinaryIO::write(outputFileName, binaryFileHeader);
 
-        binaryFileHeader.clear(); // release memory
+        binaryFileHeader.clear();
+        binaryFileHeader.shrink_to_fit(); // release memory
 
-        encode(toBeCompressedString, outputFileName);
+        std::string encodedData = encode(toBeEncoded, huffmanCodes);
 
-        encodingHuffmanCodes.clear(); // release memory
+        BinaryIO::write(outputFileName, encodedData);
     }
 
 
-    void decompress(const std::string& filename) {
+    static void decode(const std::string& filename, const std::string& outputFileName) {
 
-        std::string compressedData = BinaryIO::read(filename);
+        unsigned int fileHeaderSizeInBytes = byteSize(decodeFileHeaderSizeInBits(BinaryIO::read(filename, 0, 2)));
 
-        if (compressedData.substr(0, fileSignature.length()) != fileSignature) {
-            throw std::domain_error("Wrong File Type");
-        }
+        std::string fileHeader = BinaryIO::read(filename, 0, fileHeaderSizeInBytes);
 
-        reconstructHuffmanCodes(compressedData);
-        reconstructHuffmanTree();
+        auto huffmanCodes = reconstructHuffmanCodes(fileHeader);
+        Node* huffmanTree = reconstructHuffmanTree(huffmanCodes);
 
-        int fileHeaderSizeInBits = decodeFileHeaderSizeInBits(compressedData);
-        int fileHeaderSizeInBytes = fileHeaderSizeInBits / BYTE + (fileHeaderSizeInBits % BYTE != 0);
+        std::string toBeDecoded = BinaryIO::read(filename, fileHeaderSizeInBytes);
 
-        compressedData.erase(0, fileHeaderSizeInBytes); // file header is no longer needed so we can release memory
+        std::string decodedData = decode(toBeDecoded, huffmanCodes, huffmanTree);
 
-        std::string outputFileName = filename + ".decoded";
-        remove(outputFileName.c_str()); // remove the file if exists
-
-        decode(compressedData, outputFileName);
+        BinaryIO::write(outputFileName, decodedData);
 
         deallocateHuffmanTree(huffmanTree); // release memory
-        decodingHuffmanCodes.clear(); // release memory
-
     }
 
-    virtual ~Huffman() {
-        deallocateHuffmanTree(huffmanTree);
-    }
 
 private:
 
-    void decode(const std::string& toBeDecoded, const std::string& outputFileName) {
+    static unsigned int byteSize(unsigned int numberOfBits) {
+        return numberOfBits / BYTE + (numberOfBits % BYTE != 0);
+    }
 
-        std::string toBeDecodedBinaryString;
+
+    static std::string encode(const std::string& toBeEncoded, std::unordered_map<char, std::string>& huffmanCodes) {
+        std::string encodedString;
+        for (char c : toBeEncoded) {
+            encodedString += huffmanCodes[c];
+        }
+
+        std::string encodedData = Converter::bitString_ToRealBinary(encodedString);
+        unsigned char extraBitsInLastByte = getNumberOfExtraBitsInLastByte(encodedString);
+
+        encodedData += extraBitsInLastByte;
+
+        return encodedData;
+    }
+
+
+    static std::string decode(std::string& toBeDecoded, std::unordered_map<std::string, char>& huffmanCodes, Node* huffmanTree) {
+
+        int extraBitsInLastByte = toBeDecoded.back();
+        toBeDecoded.pop_back();
+
+        std::string toBeDecodedBitString = Converter::string_ToBitString(toBeDecoded);
+
+        toBeDecodedBitString.erase(toBeDecodedBitString.length() - extraBitsInLastByte);
+
         std::string decodedData, currentCode;
         Node* currentNode = huffmanTree;
+        for (char toBeDecodedBit : toBeDecodedBitString) {
 
-        int positionCompressedData = 0;
-        do {
+            if (toBeDecodedBit == '1')
+                currentNode = currentNode->left;
+            else if (toBeDecodedBit == '0')
+                currentNode = currentNode->right;
 
-            toBeDecodedBinaryString = Converter::string_ToBitString(toBeDecoded, positionCompressedData,
-                                                                    ONE_MEGA_BYTE);
-            positionCompressedData += ONE_MEGA_BYTE;
+            currentCode += toBeDecodedBit;
 
-            // if we reached end of the file
-            if (positionCompressedData >= toBeDecoded.length()) {
-                int sizeOfLastByte = toBeDecoded.back();
-                // Remove the last 8 Bits from the string which were for the last byte size
-                toBeDecodedBinaryString.erase(toBeDecodedBinaryString.length() - BYTE, BYTE);
-
-                // Remove unneeded bits from last byte
-                // example: if sizeOfLastByte is 5 and the last byte is 10100011 we remove 101
-                toBeDecodedBinaryString.erase(toBeDecodedBinaryString.length() - BYTE,
-                                              BYTE - sizeOfLastByte);
+            if (currentNode->isLeaf()) {
+                decodedData += huffmanCodes[currentCode];
+                currentCode.clear();
+                currentNode = huffmanTree;
             }
-
-            for (char toBeDecodedBit : toBeDecodedBinaryString) {
-
-                if (toBeDecodedBit == '1')
-                    currentNode = currentNode->left;
-                else if (toBeDecodedBit == '0')
-                    currentNode = currentNode->right;
-
-                currentCode += toBeDecodedBit;
-
-                if (currentNode->isLeaf()) {
-                    decodedData += decodingHuffmanCodes[currentCode];
-                    currentCode.clear();
-                    currentNode = huffmanTree;
-                }
-            }
-
-            // exports the decoded data until now to free some memory
-            if (decodedData.length() >= ONE_MEGA_BYTE) {
-                BinaryIO::write(outputFileName, decodedData);
-                decodedData.clear();
-            }
-
-        } while (positionCompressedData < toBeDecoded.length());
-
-        if (!decodedData.empty()) {
-            BinaryIO::write(outputFileName, decodedData);
         }
+        return decodedData;
+    }
 
+    static unsigned int decodeFileHeaderSizeInBits(const std::string& fileHeader) {
+        unsigned int fileHeaderSizeInBits = (unsigned char) fileHeader[0];
+        fileHeaderSizeInBits <<= BYTE;
+        fileHeaderSizeInBits += (unsigned char) fileHeader[1];
+        return fileHeaderSizeInBits;
     }
 
 
-    unsigned int decodeFileHeaderSizeInBits(const std::string& compressedFileData) {
+    static std::unordered_map<char , std::string> generateHuffmanCodes(Node* huffmanTree) {
+        std::unordered_map<char, std::string> huffmanCodes;
+        std::string code;
 
-        int sizeOfFileHeaderSize = 2; // 2 bytes is the size of the (file header size)
+        std::function<void(Node*)> generateHuffmanCodesRecursive = [&](Node* node) {
+            if (node == nullptr)
+                return;
 
-        std::string headerFileSize = Converter::string_ToBitString(
-                compressedFileData, fileSignature.length(), sizeOfFileHeaderSize);
+            if (node->isLeaf()) {
+                huffmanCodes.emplace(node->value, code);
+                return;
+            }
 
-        return Converter::bitString_ToInt(headerFileSize);
-    }
+            code.push_back('1');
+            generateHuffmanCodesRecursive(node->left);
+            code.back() = '0';
+            generateHuffmanCodesRecursive(node->right);
+            code.pop_back();
+        };
 
+        generateHuffmanCodesRecursive(huffmanTree);
 
-    void generateHuffmanCodes(Node*& node, const std::string& code = "") {
-        if (node == nullptr)
-            return;
-
-        if (node->isLeaf()) {
-            encodingHuffmanCodes[node->value] = code;
-            return;
-        }
-
-        generateHuffmanCodes(node->left, code + "1");
-        generateHuffmanCodes(node->right, code + "0");
-
+        return huffmanCodes;
     }
 
 
     // Read the file Header and construct the Huffman Codes Dictionary
-    void reconstructHuffmanCodes(const std::string& compressedFileData) {
+    static std::unordered_map<std::string, char> reconstructHuffmanCodes(const std::string& fileHeader) {
 
-        int fileHeaderSize = decodeFileHeaderSizeInBits(compressedFileData);
+        unsigned int dictionaryLengthInBits = decodeFileHeaderSizeInBits(fileHeader) - (2u * BYTE);
 
-        // 2 -> size of (file header size)
-        int smallestCodeLengthIndex = fileSignature.length() + 2;
-        int smallestCodeLength = compressedFileData[smallestCodeLengthIndex];
-
-        int dictionaryStartIndex = smallestCodeLengthIndex + 1;
-        int dictionaryLengthInBits = fileHeaderSize - (dictionaryStartIndex * BYTE);
-
-        std::string dictionaryBits = Converter::string_ToBitString(
-                compressedFileData, dictionaryStartIndex, dictionaryLengthInBits / BYTE + 1);
+        std::string dictionaryBits = Converter::string_ToBitString(fileHeader, 2, fileHeader.length());
 
         // if the header does not fit in bytes, i.e. there are extra bits which does not belong to it
-        if (dictionaryLengthInBits % BYTE != 0) {
-            int bitsToEraseLength = dictionaryBits.length() - dictionaryLengthInBits;
-            dictionaryBits.erase(dictionaryBits.length() - BYTE, bitsToEraseLength);
-        }
+        while (dictionaryBits.length() > dictionaryLengthInBits)
+            dictionaryBits.pop_back();
 
-        int codeLength = smallestCodeLength;
-        char value;
+        std::unordered_map<std::string, char> huffmanCodes;
+        unsigned char value;
         std::string code;
         for (int i = 0; i < dictionaryLengthInBits;) {
             value = Converter::bitString_ToRealBinary(dictionaryBits, i, BYTE)[0];
             i += BYTE;
-            codeLength += dictionaryBits[i] == '1' ? 1 : 0; // to understand this look at dictionary encoding
-            i++;
+            unsigned int codeLength = Converter::bitString_ToInt(dictionaryBits.substr(i, BYTE));
+            i += BYTE;
             code = dictionaryBits.substr(i, codeLength);
             i += codeLength;
-            decodingHuffmanCodes[code] = value;
+            huffmanCodes[code] = value;
         }
 
+        return huffmanCodes;
     }
 
 
-    void buildHuffmanTree() {
+    static Node* buildHuffmanTree(const std::unordered_map<char, int>& frequencies) {
         std::priority_queue<Node*, std::vector<Node*>, Node::Compare> pq;
 
         // for the readability purposes
@@ -226,11 +194,11 @@ private:
             pq.push((*node1) + node2);
         }
 
-        huffmanTree = pq.top();
+        return pq.top();
     }
 
 
-    void reconstructHuffmanTree() {
+    static Node* reconstructHuffmanTree(const std::unordered_map<std::string, char> &huffmanCodes) {
 
         Node* root = new Node;
         Node* currentNode;
@@ -239,7 +207,7 @@ private:
         #define code first
         #define encodedValue second
 
-        for (auto& huffmanCode : decodingHuffmanCodes) {
+        for (const auto& huffmanCode : huffmanCodes) {
             currentNode = root;
             for (char currentCodeBit : huffmanCode.code) {
                 if (currentCodeBit == '1') { // goes left
@@ -262,11 +230,11 @@ private:
         #undef code
         #undef encodedValue
 
-        huffmanTree = root;
+        return root;
     }
 
 
-    static void deallocateHuffmanTree(Node*& node) {
+    static void deallocateHuffmanTree(Node* node) {
         if (node == nullptr)
             return;
 
@@ -284,64 +252,25 @@ private:
     }
 
 
-    void generateFrequencies(const std::string& input) {
+    static std::unordered_map<char, int> generateFrequencies(const std::string& input) {
+        std::unordered_map<char, int> frequencies;
         for (char currentChar : input) {
             frequencies[currentChar]++;
         }
+        return frequencies;
     }
 
 
-    struct StringCompare {
-        bool operator ()(const std::string& s1, const std::string& s2) {
-            return s1.length() == s2.length() ? s1 < s2 : s1.length() < s2.length();
-        }
-    };
-
-
-    std::map<std::string, char, StringCompare> getSortedHuffmanCodes() {
-
-        std::map<std::string, char, StringCompare> sortedHuffmanCodes;
-
+    static std::string generateFileHeaderDictionary(const std::unordered_map<char, std::string>& huffmanCodes) {
         #define encodedValue first
         #define code second
 
-        // just swaps the map (key becomes value and value becomes key)
-        for (auto& huffmanCode : encodingHuffmanCodes) {
-            sortedHuffmanCodes[huffmanCode.code] = huffmanCode.encodedValue;
-        }
-
-        #undef encodedValue
-        #undef code
-
-        return sortedHuffmanCodes;
-    }
-
-
-    std::string generateFileHeaderDictionary() {
-        #define code first
-        #define encodedValue second
-
         std::string dictionary;
 
-        std::map<std::string, char, StringCompare> sortedHuffmanCodes = getSortedHuffmanCodes();
-
-        // the smallest code length is at sortedHuffmanCodes.begin() because it is sorted.
-        int smallestCodeLength = sortedHuffmanCodes.begin()->code.length();
-
-        // This is based on the fact that Huffman Codes are optimal
-        // Therefore, when sorting them, the length difference between each two consecutive codes is 0 or 1
-        // Therefore, we can store them in 1 bit only but we need the start to increment it which is smallestCodeLength
-        dictionary += Converter::int8_ToBitString(smallestCodeLength);
-
-        int currentCodeLength, previousCodeLength = smallestCodeLength;
-
-        for (auto& huffmanCode : sortedHuffmanCodes) {
+        for (auto& huffmanCode : huffmanCodes) {
             dictionary += Converter::int8_ToBitString(huffmanCode.encodedValue);
-
-            currentCodeLength = huffmanCode.code.length();
-            dictionary += std::to_string(currentCodeLength - previousCodeLength); // The difference is 0 or 1 ONLY
-            previousCodeLength = currentCodeLength;
-
+            unsigned char currentCodeLength = huffmanCode.code.length();
+            dictionary += Converter::int8_ToBitString(currentCodeLength);
             dictionary += huffmanCode.code;
         }
 
@@ -352,58 +281,23 @@ private:
     }
 
 
-    std::string generateFileHeader() {
-        std::string fileHeader;
+    static std::string generateFileHeader(const std::unordered_map<char, std::string>& huffmanCodes) {
 
-        fileHeader = Converter::string_ToBitString(fileSignature);
+        std::string dictionary = generateFileHeaderDictionary(huffmanCodes);
 
-        std::string dictionary = generateFileHeaderDictionary();
-
-        //  2 * BYTE is the size of "fileHeaderSize" itself as it is added to the header
-        short fileHeaderSize = fileHeader.length() + 2 * BYTE + dictionary.length();
+        //  2u * BYTE is the size of "fileHeaderSize" itself as it is added to the header
+        unsigned short fileHeaderSize = 2u * BYTE + dictionary.length();
 
         // File Header Size in bits (it is 2 Bytes -> max of 8KB header)
         std::string fileHeaderSizeInBits = Converter::int16_ToBitString(fileHeaderSize);
 
-        fileHeader += fileHeaderSizeInBits;
-        fileHeader += dictionary;
-
+        std::string fileHeader = fileHeaderSizeInBits + dictionary;
         return fileHeader;
     }
 
-
-    void encode(const std::string& toBeCompressedString, const std::string& outputFileName) {
-        std::string encodedString, encodedData;
-
-        for (char c : toBeCompressedString) {
-            encodedString += encodingHuffmanCodes[c];
-
-            // export to file and free exported memory every 1MB data
-            if (encodedString.length() >= ONE_MEGA_BYTE) {
-                int maxLengthDivisibleByBlockSize = encodedString.length() & (~(BYTE - 1));
-
-                encodedData = Converter::bitString_ToRealBinary(encodedString, maxLengthDivisibleByBlockSize);
-                encodedString.erase(0, maxLengthDivisibleByBlockSize);
-                BinaryIO::write(outputFileName, encodedData);
-            }
-        }
-
-        encodedData = Converter::bitString_ToRealBinary(encodedString);
-        BinaryIO::write(outputFileName, encodedData);
-        exportLastByteSize(encodedString, outputFileName);
-    }
-
-
-    static void exportLastByteSize(const std::string& encodedString, const std::string& outputFileName) {
-        int maxLengthDivisibleByBlockSize = encodedString.length() & (~(BYTE - 1));
-
-        int lastByteSize = encodedString.length() - maxLengthDivisibleByBlockSize;
-
-        std::string binary = Converter::int8_ToBitString(lastByteSize);
-
-        binary = Converter::bitString_ToRealBinary(binary);
-
-        BinaryIO::write(outputFileName, binary);
+    static unsigned char getNumberOfExtraBitsInLastByte(const std::string& encodedString) {
+        int maxLengthFitInBytes = encodedString.length() & (~(BYTE - 1u));
+        return (BYTE - (encodedString.length() - maxLengthFitInBytes));
     }
 
 

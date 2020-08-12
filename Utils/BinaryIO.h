@@ -7,18 +7,34 @@
 
 namespace BinaryIO {
 
+    int getFileSize(std::ifstream &input){
+        input.seekg(0 , std::ios::end);
+        return input.tellg();
+    }
 
-    std::string read(const std::string& filename) {
+    int getFileSize(const std::string &filename){
+        std::ifstream input(filename);
+        return getFileSize(input);
+    }
+
+    std::string read(const std::string& filename, int startPosition, int length) {
         std::ifstream input(filename, std::ios::in | std::ios::binary);
         std::string fileData;
         if (input) {
-            input.seekg(0, std::ios::end);
-            fileData.resize(input.tellg());
-            input.seekg(0, std::ios::beg);
+            input.seekg(startPosition);
+            fileData.resize(length);
             input.read(&fileData[0], fileData.size());
             input.close();
         }
         return fileData;
+    }
+
+    std::string read(const std::string& filename, int startPosition) {
+        return read(filename, startPosition, getFileSize(filename) - startPosition);
+    }
+
+    std::string read(const std::string& filename) {
+        return read(filename , 0 , getFileSize(filename));
     }
 
 

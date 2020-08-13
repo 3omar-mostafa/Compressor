@@ -11,13 +11,11 @@
  */
 class BWT {
 
-    int originalIndex = 0;
+    static int originalIndex;
 
 public:
 
-    void encode(const std::string& filename, const std::string& outputFileName) {
-
-        remove(outputFileName.c_str()); // remove the file if exists
+    static void encode(const std::string& filename, const std::string& outputFileName) {
 
         std::string toBeEncoded = BinaryIO::read(filename);
 
@@ -32,9 +30,8 @@ public:
         BinaryIO::write(outputFileName, originalIndex);
     }
 
-    void decode(const std::string& filename, const std::string& outputFileName) {
+    static void decode(const std::string& filename, const std::string& outputFileName) {
 
-        remove(outputFileName.c_str()); // remove the file if exists
         std::string bwt = BinaryIO::read(filename);
 
         std::string index;
@@ -62,7 +59,7 @@ private:
     }
 
     // Generate Burrows - Wheeler Transform of given text
-    std::string generateBWT(const std::string& input, std::vector<unsigned int>& suffixArray) {
+    static std::string generateBWT(const std::string& input, std::vector<unsigned int>& suffixArray) {
         // Iterates over the suffix array to find
         // the last char of each cyclic rotation
         std::string bwtLastColumn;
@@ -129,5 +126,7 @@ private:
     }
 
 };
+
+int BWT::originalIndex = 0;
 
 #endif //BWT_H

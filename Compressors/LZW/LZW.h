@@ -58,6 +58,7 @@ public:
         bitString += Converter::bits_ToBitString(dictionary[currentMatch], currentWordLength);
 
         std::string encodedData = Converter::bitString_ToRealBinary(bitString);
+        remove(outputFileName.c_str()); // Remove Output File If Exists
         BinaryIO::write(outputFileName, encodedData);
     }
 
@@ -94,6 +95,7 @@ public:
 
         }
 
+        remove(outputFileName.c_str()); // Remove Output File If Exists
         BinaryIO::write(outputFileName, decoded);
     }
 

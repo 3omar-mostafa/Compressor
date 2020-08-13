@@ -28,6 +28,7 @@ public:
 
         std::string binaryFileHeader = Converter::bitString_ToRealBinary(generateFileHeader(huffmanCodes));
 
+        remove(outputFileName.c_str()); // Remove Output File If Exists
         BinaryIO::write(outputFileName, binaryFileHeader);
 
         binaryFileHeader.clear();
@@ -52,6 +53,7 @@ public:
 
         std::string decodedData = decode(toBeDecoded, huffmanCodes, huffmanTree);
 
+        remove(outputFileName.c_str()); // Remove Output File If Exists
         BinaryIO::write(outputFileName, decodedData);
 
         deallocateHuffmanTree(huffmanTree); // release memory

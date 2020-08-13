@@ -25,9 +25,10 @@ public:
 
         std::string bwt = generateBWT(toBeEncoded, suffixArray);
 
+        remove(outputFileName.c_str()); // Remove Output File If Exists
         BinaryIO::write(outputFileName, bwt);
-
         BinaryIO::write(outputFileName, originalIndex);
+
     }
 
     static void decode(const std::string& filename, const std::string& outputFileName) {
@@ -35,18 +36,16 @@ public:
         std::string bwt = BinaryIO::read(filename);
 
         std::string index;
-
         for (int i = 0; i < sizeof(originalIndex); ++i) {
             index.insert(0, 1, bwt.back());
             bwt.pop_back();
         }
 
         originalIndex = (int) Converter::string_ToInt64(index);
-
         std::string inverseBWT = BWT::invertBWT(bwt, originalIndex);
-
         inverseBWT.pop_back(); // remove '\0' which was added at encoding
 
+        remove(outputFileName.c_str()); // Remove Output File If Exists
         BinaryIO::write(outputFileName, inverseBWT);
 
     }

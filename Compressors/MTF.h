@@ -44,6 +44,7 @@ public:
             symbolsList.push_front(symbol);
         }
 
+        remove(outputFileName.c_str()); // Remove Output File If Exists
         BinaryIO::write(outputFileName, encoded);
 
     }
@@ -62,6 +63,7 @@ public:
             symbolsList.push_front(ptr.value);
         }
 
+        remove(outputFileName.c_str()); // Remove Output File If Exists
         BinaryIO::write(outputFileName, decoded);
 
     }

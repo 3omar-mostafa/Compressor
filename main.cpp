@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Compressors/LZW.h"
+#include "Compressors/LZW/LZW.h"
 #include "Compressors/BWT/BWT.h"
 #include "Compressors/MTF.h"
 
@@ -59,16 +59,14 @@ void compress(const std::string& toBeCompressedFilename, const std::string& outp
     MTF mtf;
     mtf.encode(outputFilename, outputFilename); // same filename will makes it write output to the same file
 
-    LZW lzw;
-    lzw.encode(outputFilename, outputFilename); // same filename will makes it write output to the same file
+    LZW::encode(outputFilename, outputFilename); // same filename will makes it write output to the same file
 
 }
 
 
 void decompress(const std::string& toBeDecompressedFilename, const std::string& outputFilename) {
 
-    LZW lzw;
-    lzw.decode(toBeDecompressedFilename, outputFilename);
+    LZW::decode(toBeDecompressedFilename, outputFilename);
 
     MTF mtf;
     mtf.decode(outputFilename, outputFilename); // same filename will makes it write output to the same file

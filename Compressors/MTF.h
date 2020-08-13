@@ -26,19 +26,17 @@ struct Iterator {
  */
 class MTF {
 
-    std::list<unsigned char> symbolsList;
+    static std::list<unsigned char> symbolsList;
 
 public:
 
-    void encode(const std::string& filename, const std::string& outputFileName) {
+    static void encode(const std::string& filename, const std::string& outputFileName) {
 
         std::string toBeEncoded = BinaryIO::read(filename);
-        remove(outputFileName.c_str()); // remove the file if exists
 
         generateSymbols();
 
         std::string encoded;
-
         for (unsigned char symbol : toBeEncoded) {
             auto ptr = getIndexOfValue(symbol);
             encoded += ptr.index;
@@ -50,10 +48,9 @@ public:
 
     }
 
-    void decode(const std::string& filename, const std::string& outputFileName) {
+    static void decode(const std::string& filename, const std::string& outputFileName) {
 
         std::string toBeDecoded = BinaryIO::read(filename);
-        remove(outputFileName.c_str()); // remove the file if exists
 
         generateSymbols();
 
@@ -71,13 +68,14 @@ public:
 
 private:
 
-    void generateSymbols() {
+    static void generateSymbols() {
+        symbolsList.clear();
         for (unsigned int i = 0; i < 256; ++i) {
             symbolsList.push_back(i);
         }
     }
 
-    Iterator getIndexOfValue(unsigned char c) {
+    static Iterator getIndexOfValue(unsigned char c) {
         unsigned int index = 0;
         for (auto iter = symbolsList.begin(); iter != symbolsList.end(); ++iter) {
             if (*iter == c)
@@ -87,7 +85,7 @@ private:
         return {std::list<unsigned char>::const_iterator(), 0};
     }
 
-    Iterator getValueOfIndex(unsigned int requiredIndex) {
+    static Iterator getValueOfIndex(unsigned int requiredIndex) {
         unsigned int index = 0;
         for (auto iter = symbolsList.begin(); iter != symbolsList.end(); ++iter) {
             if (index == requiredIndex)
@@ -100,5 +98,6 @@ private:
 
 };
 
+std::list<unsigned char> MTF::symbolsList;
 
 #endif //MTF_H

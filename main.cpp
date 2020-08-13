@@ -52,25 +52,15 @@ int main() {
 }
 
 void compress(const std::string& toBeCompressedFilename, const std::string& outputFilename) {
-
     BWT::encode(toBeCompressedFilename, outputFilename);
-
-    MTF mtf;
-    mtf.encode(outputFilename, outputFilename); // same filename will makes it write output to the same file
-
+    MTF::encode(outputFilename, outputFilename); // same filename will makes it write output to the same file
     LZW::encode(outputFilename, outputFilename); // same filename will makes it write output to the same file
-
 }
 
 
 void decompress(const std::string& toBeDecompressedFilename, const std::string& outputFilename) {
-
     LZW::decode(toBeDecompressedFilename, outputFilename);
-
-    MTF mtf;
-    mtf.decode(outputFilename, outputFilename); // same filename will makes it write output to the same file
-
+    MTF::decode(outputFilename, outputFilename); // same filename will makes it write output to the same file
     BWT::decode(outputFilename, outputFilename); // same filename will makes it write output to the same file
-
 }
 

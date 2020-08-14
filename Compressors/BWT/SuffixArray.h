@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <cstdint>
 
 
 /**
@@ -16,14 +17,14 @@ class SuffixArray {
 
 public:
 
-    static std::vector<unsigned int> buildSuffixArray(const std::string& inputString) {
+    static std::vector<uint32_t> buildSuffixArray(const std::string& inputString) {
         const int ADDITIONAL_SIZE = 3;
-        std::vector<unsigned int> suffixArray(inputString.size() + ADDITIONAL_SIZE);
+        std::vector<uint32_t> suffixArray(inputString.size() + ADDITIONAL_SIZE);
 
         std::vector<int> input;
         input.reserve(suffixArray.size());
 
-        for (unsigned char c : inputString) {
+        for (uint8_t c : inputString) {
             input.push_back(c);
         }
 

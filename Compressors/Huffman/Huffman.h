@@ -4,12 +4,13 @@
 #include <queue>
 #include <unordered_map>
 #include <functional>
+#include <cstdint>
 
 #include "Node.h"
 #include "../../Utils/Converter.h"
 #include "../../Utils/BinaryIO.h"
 
-#define BYTE 8
+#define BYTE 8u
 
 class Huffman {
 
@@ -42,7 +43,7 @@ public:
 
     static void decode(const std::string& filename, const std::string& outputFileName) {
 
-        unsigned int fileHeaderSizeInBytes = byteSize(decodeFileHeaderSizeInBits(BinaryIO::read(filename, 0, 2)));
+        uint32_t fileHeaderSizeInBytes = byteSize(decodeFileHeaderSizeInBits(BinaryIO::read(filename, 0, 2)));
 
         std::string fileHeader = BinaryIO::read(filename, 0, fileHeaderSizeInBytes);
 
@@ -62,7 +63,7 @@ public:
 
 private:
 
-    static unsigned int byteSize(unsigned int numberOfBits) {
+    static uint32_t byteSize(uint32_t numberOfBits) {
         return numberOfBits / BYTE + (numberOfBits % BYTE != 0);
     }
 
@@ -74,7 +75,7 @@ private:
         }
 
         std::string encodedData = Converter::bitString_ToRealBinary(encodedString);
-        unsigned char extraBitsInLastByte = getNumberOfExtraBitsInLastByte(encodedString);
+        uint8_t extraBitsInLastByte = getNumberOfExtraBitsInLastByte(encodedString);
 
         encodedData += extraBitsInLastByte;
 
@@ -111,10 +112,10 @@ private:
         return decodedData;
     }
 
-    static unsigned int decodeFileHeaderSizeInBits(const std::string& fileHeader) {
-        unsigned int fileHeaderSizeInBits = (unsigned char) fileHeader[0];
+    static uint32_t decodeFileHeaderSizeInBits(const std::string& fileHeader) {
+        uint32_t fileHeaderSizeInBits = (uint8_t) fileHeader[0];
         fileHeaderSizeInBits <<= BYTE;
-        fileHeaderSizeInBits += (unsigned char) fileHeader[1];
+        fileHeaderSizeInBits += (uint8_t) fileHeader[1];
         return fileHeaderSizeInBits;
     }
 
@@ -148,7 +149,7 @@ private:
     // Read the file Header and construct the Huffman Codes Dictionary
     static std::unordered_map<std::string, char> reconstructHuffmanCodes(const std::string& fileHeader) {
 
-        unsigned int dictionaryLengthInBits = decodeFileHeaderSizeInBits(fileHeader) - (2u * BYTE);
+        uint32_t dictionaryLengthInBits = decodeFileHeaderSizeInBits(fileHeader) - (2u * BYTE);
 
         std::string dictionaryBits = Converter::string_ToBitString(fileHeader, 2, fileHeader.length());
 
@@ -157,12 +158,12 @@ private:
             dictionaryBits.pop_back();
 
         std::unordered_map<std::string, char> huffmanCodes;
-        unsigned char value;
+        uint8_t value;
         std::string code;
         for (int i = 0; i < dictionaryLengthInBits;) {
             value = Converter::bitString_ToRealBinary(dictionaryBits, i, BYTE)[0];
             i += BYTE;
-            unsigned int codeLength = Converter::bitString_ToInt(dictionaryBits.substr(i, BYTE));
+            uint32_t codeLength = Converter::bitString_ToInt(dictionaryBits.substr(i, BYTE));
             i += BYTE;
             code = dictionaryBits.substr(i, codeLength);
             i += codeLength;
@@ -271,7 +272,7 @@ private:
 
         for (auto& huffmanCode : huffmanCodes) {
             dictionary += Converter::int8_ToBitString(huffmanCode.encodedValue);
-            unsigned char currentCodeLength = huffmanCode.code.length();
+            uint8_t currentCodeLength = huffmanCode.code.length();
             dictionary += Converter::int8_ToBitString(currentCodeLength);
             dictionary += huffmanCode.code;
         }
@@ -288,7 +289,7 @@ private:
         std::string dictionary = generateFileHeaderDictionary(huffmanCodes);
 
         //  2u * BYTE is the size of "fileHeaderSize" itself as it is added to the header
-        unsigned short fileHeaderSize = 2u * BYTE + dictionary.length();
+        uint16_t fileHeaderSize = 2u * BYTE + dictionary.length();
 
         // File Header Size in bits (it is 2 Bytes -> max of 8KB header)
         std::string fileHeaderSizeInBits = Converter::int16_ToBitString(fileHeaderSize);
@@ -297,7 +298,7 @@ private:
         return fileHeader;
     }
 
-    static unsigned char getNumberOfExtraBitsInLastByte(const std::string& encodedString) {
+    static uint8_t getNumberOfExtraBitsInLastByte(const std::string& encodedString) {
         int maxLengthFitInBytes = encodedString.length() & (~(BYTE - 1u));
         return (BYTE - (encodedString.length() - maxLengthFitInBytes));
     }

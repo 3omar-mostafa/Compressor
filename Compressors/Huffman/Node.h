@@ -1,22 +1,23 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include <cstdint>
+
 class Node {
 
 public:
 
-    char value;
-    int freq;
+    uint8_t value;
+    uint32_t freq;
     Node* left;
     Node* right;
 
     Node() {
-        value = -1;
-        freq = -1;
+        value = freq =0;
         left = right = nullptr;
     }
 
-    Node(char value, int freq) : value(value), freq(freq) {
+    Node(uint8_t value, uint32_t freq) : value(value), freq(freq) {
         left = right = nullptr;
     }
 

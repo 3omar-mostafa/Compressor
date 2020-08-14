@@ -5,13 +5,14 @@
 #include "SuffixArray.h"
 #include <algorithm>
 #include <list>
+#include <cstdint>
 
 /**
  * Burrows - Wheeler Transform
  */
 class BWT {
 
-    static int originalIndex;
+    static uint32_t originalIndex;
 
 public:
 
@@ -21,7 +22,7 @@ public:
 
         toBeEncoded += '\0';
 
-        std::vector<unsigned int> suffixArray = SuffixArray::buildSuffixArray(toBeEncoded);
+        std::vector<uint32_t> suffixArray = SuffixArray::buildSuffixArray(toBeEncoded);
 
         std::string bwt = generateBWT(toBeEncoded, suffixArray);
 
@@ -41,7 +42,7 @@ public:
             bwt.pop_back();
         }
 
-        originalIndex = (int) Converter::string_ToInt64(index);
+        originalIndex = (uint32_t) Converter::string_ToInt64(index);
         std::string inverseBWT = BWT::invertBWT(bwt, originalIndex);
         inverseBWT.pop_back(); // remove '\0' which was added at encoding
 
@@ -58,7 +59,7 @@ private:
     }
 
     // Generate Burrows - Wheeler Transform of given text
-    static std::string generateBWT(const std::string& input, std::vector<unsigned int>& suffixArray) {
+    static std::string generateBWT(const std::string& input, std::vector<uint32_t>& suffixArray) {
         // Iterates over the suffix array to find
         // the last char of each cyclic rotation
         std::string bwtLastColumn;
@@ -102,13 +103,13 @@ private:
         // whose data part contains index at which
         // character occurs in BWT[]
         for (int i = 0; i < length; i++) {
-            arr[(unsigned char) BWT[i]].push_back(i);
+            arr[(uint8_t) BWT[i]].push_back(i);
         }
 
         // Takes each distinct character of sorted_arr[] as head
         // of a linked list and finds leftShift[]
         for (int i = 0; i < length; i++) {
-            computeLeftShift(arr[(unsigned char) sortedBWT[i]], i, leftShift);
+            computeLeftShift(arr[(uint8_t) sortedBWT[i]], i, leftShift);
         }
 
         std::string inverseBWT;
@@ -126,6 +127,6 @@ private:
 
 };
 
-int BWT::originalIndex = 0;
+uint32_t BWT::originalIndex = 0;
 
 #endif //BWT_H

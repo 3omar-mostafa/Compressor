@@ -3,17 +3,18 @@
 
 #include <list>
 #include <string>
+#include <cstdint>
 #include "../Utils/BinaryIO.h"
 
 /**
  * Wrapper around std::list::iterator
  */
 struct Iterator {
-    std::list<unsigned char>::const_iterator iterator;
-    unsigned char index;
-    unsigned char value;
+    std::list<uint8_t>::const_iterator iterator;
+    uint8_t index;
+    uint8_t value;
 
-    Iterator(const std::list<unsigned char>::const_iterator& iterator, unsigned int index) {
+    Iterator(const std::list<uint8_t>::const_iterator& iterator, uint32_t index) {
         this->iterator = iterator;
         this->index = index;
         this->value = *iterator;
@@ -26,7 +27,7 @@ struct Iterator {
  */
 class MTF {
 
-    static std::list<unsigned char> symbolsList;
+    static std::list<uint8_t> symbolsList;
 
 public:
 
@@ -37,7 +38,7 @@ public:
         generateSymbols();
 
         std::string encoded;
-        for (unsigned char symbol : toBeEncoded) {
+        for (uint8_t symbol : toBeEncoded) {
             auto ptr = getIndexOfValue(symbol);
             encoded += ptr.index;
             symbolsList.erase(ptr.iterator);
@@ -56,7 +57,7 @@ public:
         generateSymbols();
 
         std::string decoded;
-        for (unsigned char index : toBeDecoded) {
+        for (uint8_t index : toBeDecoded) {
             auto ptr = getValueOfIndex(index);
             decoded += ptr.value;
             symbolsList.erase(ptr.iterator);
@@ -72,34 +73,34 @@ private:
 
     static void generateSymbols() {
         symbolsList.clear();
-        for (unsigned int i = 0; i < 256; ++i) {
+        for (uint32_t i = 0; i < 256; ++i) {
             symbolsList.push_back(i);
         }
     }
 
-    static Iterator getIndexOfValue(unsigned char c) {
-        unsigned int index = 0;
+    static Iterator getIndexOfValue(uint8_t c) {
+        uint32_t index = 0;
         for (auto iter = symbolsList.begin(); iter != symbolsList.end(); ++iter) {
             if (*iter == c)
                 return {iter, index};
             index++;
         }
-        return {std::list<unsigned char>::const_iterator(), 0};
+        return {std::list<uint8_t>::const_iterator(), 0};
     }
 
-    static Iterator getValueOfIndex(unsigned int requiredIndex) {
-        unsigned int index = 0;
+    static Iterator getValueOfIndex(uint32_t requiredIndex) {
+        uint32_t index = 0;
         for (auto iter = symbolsList.begin(); iter != symbolsList.end(); ++iter) {
             if (index == requiredIndex)
                 return {iter, index};
             index++;
         }
-        return {std::list<unsigned char>::const_iterator(), 0};
+        return {std::list<uint8_t>::const_iterator(), 0};
     }
 
 
 };
 
-std::list<unsigned char> MTF::symbolsList;
+std::list<uint8_t> MTF::symbolsList;
 
 #endif //MTF_H

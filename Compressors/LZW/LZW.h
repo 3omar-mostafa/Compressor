@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <cstdint>
 #include "../../Utils/BinaryIO.h"
 #include "../../Utils/Converter.h"
 #include "Utils.h"
@@ -10,8 +11,8 @@
 
 class LZW {
 
-    static std::unordered_map<std::string, int> initializeEncodingDictionary() {
-        std::unordered_map<std::string, int> encodingDictionary;
+    static std::unordered_map<std::string, uint32_t> initializeEncodingDictionary() {
+        std::unordered_map<std::string, uint32_t> encodingDictionary;
         for (int i = 0; i < 256; ++i) {
             std::string s(1, i);
             encodingDictionary[s] = i;
@@ -19,8 +20,8 @@ class LZW {
         return encodingDictionary;
     }
 
-    static std::unordered_map<int, std::string> initializeDecodingDictionary() {
-        std::unordered_map<int, std::string> decodingDictionary;
+    static std::unordered_map<uint32_t, std::string> initializeDecodingDictionary() {
+        std::unordered_map<uint32_t, std::string> decodingDictionary;
         for (int i = 0; i < 256; ++i) {
             std::string s(1, i);
             decodingDictionary[i] = s;
@@ -34,7 +35,7 @@ public:
     static void encode(const std::string& filename, const std::string& outputFileName) {
 
         auto dictionary = initializeEncodingDictionary();
-        unsigned int currentWordLength;
+        uint32_t currentWordLength;
 
         std::string toBeCompressedString = BinaryIO::read(filename);
 
@@ -70,8 +71,8 @@ public:
         std::string toBeDecompressed = Converter::string_ToBitString(BinaryIO::read(filename));
 
         std::string decoded;
-        unsigned int index;
-        unsigned int currentWordLength = numberOfBitsToStoreRangeOf(dictionary.size());
+        uint32_t index;
+        uint32_t currentWordLength = numberOfBitsToStoreRangeOf(dictionary.size());
         for (int i = 0; i < toBeDecompressed.length(); i += currentWordLength) {
 
             // The left characters are not enough to create a word

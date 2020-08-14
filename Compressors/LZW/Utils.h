@@ -1,18 +1,14 @@
 #ifndef LZW_UTILS_H
 #define LZW_UTILS_H
 
-/**
- * Returns the number of bits to store range of [n] numbers from 0 to n-1
- */
-
-// It is better than log as it has constant time O(1)
+#include <cstdint>
 
 #ifdef __GNUC__ // GNU GCC Compiler
 /**
  * Returns the number of bits to store range of [n] numbers from 0 to n-1 <br>
  * Fast (Constant Time O(1)) due to use of builtin intrinsics
  */
-inline unsigned int numberOfBitsToStoreRangeOf(const unsigned int n) {
+inline uint32_t numberOfBitsToStoreRangeOf(uint32_t n) {
     if(n == 0 || n == 1)
         return n;
 
@@ -28,7 +24,7 @@ inline unsigned int numberOfBitsToStoreRangeOf(const unsigned int n) {
  * Returns the number of bits to store range of [n] numbers from 0 to n-1 <br>
  * Fast (Constant Time O(1)) due to use of builtin intrinsics
  */
-inline unsigned int numberOfBitsToStoreRangeOf(const unsigned int n) {
+inline uint32_t numberOfBitsToStoreRangeOf(uint32_t n) {
     if(n == 0 || n == 1)
         return n;
 
@@ -43,11 +39,11 @@ inline unsigned int numberOfBitsToStoreRangeOf(const unsigned int n) {
  * Returns the number of bits to store range of [n] numbers from 0 to n-1 <br>
  * Slower than others due to using of normal maths
  */
-inline unsigned int numberOfBitsToStoreRangeOf(const unsigned int n) {
+inline uint32_t numberOfBitsToStoreRangeOf(uint32_t n) {
     if(n == 0 || n == 1)
         return n;
 
-    return int(log2(n-1)) + 1;
+    return uint32_t(log2(n-1)) + 1;
 }
 #endif
 

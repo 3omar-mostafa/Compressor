@@ -6,9 +6,10 @@
 #include <stdexcept>
 #include <cstdint>
 
-#define BYTE 8u
 
 namespace Converter {
+
+    static const uint32_t BYTE = 8;
 
     std::string string_ToBitString(const std::string& toBeConverted) {
         std::string bitString;

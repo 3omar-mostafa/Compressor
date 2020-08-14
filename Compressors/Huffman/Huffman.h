@@ -10,9 +10,10 @@
 #include "../../Utils/Converter.h"
 #include "../../Utils/BinaryIO.h"
 
-#define BYTE 8u
 
 class Huffman {
+
+    static const uint32_t BYTE = 8;
 
 public:
 

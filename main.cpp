@@ -1,66 +1,82 @@
 #include <iostream>
-#include "Compressors/LZW/LZW.h"
-#include "Compressors/BWT/BWT.h"
-#include "Compressors/MTF.h"
+#include "Compressors/Compressor.h"
 
-void compress(const std::string& toBeCompressedFilename, const std::string& outputFilename);
+void compressWithOutputInfo(const std::string& toBeCompressedFilename, const std::string& outputFilename);
 
-void decompress(const std::string& toBeDecompressedFilename, const std::string& outputFilename);
+void decompressWithOutputInfo(const std::string& toBeDecompressedFilename, const std::string& outputFilename);
 
-int main() {
+void checkFilesAndExitIfFoundErrors(const std::string& inputFilename, const std::string& outputFilename);
 
-    std::cout << "Welcome to Compressor!\n";
-    std::cout << "_______________________________________\n";
-    std::cout << "Choose a mode : a) encode     b) decode \n";
+void showHelp();
 
-    std::string mode;
+int main(int argc, char** argv) {
 
-    while (true) {
-        std::cin >> mode;
-        if (mode == "a" || mode == "encode" || mode == "e" || mode == "b" || mode == "decode" || mode == "d")
-            break;
-        std::cout << "Please enter a valid mode" << std::endl
-                  << "Type 'a' or 'encode' or 'e' [without quotes] to select encoding for example" << std::endl;
-    }
-
-    if (mode == "a" || mode == "encode" || mode == "e") {
-        std::string toBeCompressedFilename, outputFilename;
-
-        std::cout << "Please enter path to the file you want to encode:\n";
-        std::cin >> toBeCompressedFilename;
-        std::cout << "Please enter path to the output file including its name and extension:\n";
-        std::cin >> outputFilename;
-
-        compress(toBeCompressedFilename, outputFilename);
-
-        std::cout << "Finished encoding\nThank you";
+    if (argc == 4) {
+        std::string mode = argv[1];
+        if (mode == "-c" || mode == "--compress") {
+            std::string toBeCompressedFilename = argv[2];
+            std::string outputFilename = argv[3];
+            compressWithOutputInfo(toBeCompressedFilename, outputFilename);
+        } else if (mode == "-d" || mode == "--decompress") {
+            std::string toBeDecompressedFilename = argv[2];
+            std::string outputFilename = argv[3];
+            decompressWithOutputInfo(toBeDecompressedFilename, outputFilename);
+        } else {
+            showHelp();
+        }
     } else {
-
-        std::string toBeDecompressedFilename, outputFilename;
-
-        std::cout << "Please enter path to the file you want to decode:\n";
-        std::cin >> toBeDecompressedFilename;
-        std::cout << "Please enter path to the output file including its name and extension:\n";
-        std::cin >> outputFilename;
-
-        decompress(toBeDecompressedFilename, outputFilename);
-
-        std::cout << "Finished decoding\nThank you";
+        showHelp();
     }
-
     return 0;
 }
 
-void compress(const std::string& toBeCompressedFilename, const std::string& outputFilename) {
-    BWT::encode(toBeCompressedFilename, outputFilename);
-    MTF::encode(outputFilename, outputFilename); // same filename will makes it write output to the same file
-    LZW::encode(outputFilename, outputFilename); // same filename will makes it write output to the same file
+void decompressWithOutputInfo(const std::string& toBeDecompressedFilename, const std::string& outputFilename) {
+
+    checkFilesAndExitIfFoundErrors(toBeDecompressedFilename, outputFilename);
+
+    std::cout << "Decompressing...\n";
+    Compressor::decompress(toBeDecompressedFilename, outputFilename);
+    std::cout << "Finished Decompressing\n";
 }
 
 
-void decompress(const std::string& toBeDecompressedFilename, const std::string& outputFilename) {
-    LZW::decode(toBeDecompressedFilename, outputFilename);
-    MTF::decode(outputFilename, outputFilename); // same filename will makes it write output to the same file
-    BWT::decode(outputFilename, outputFilename); // same filename will makes it write output to the same file
+void compressWithOutputInfo(const std::string& toBeCompressedFilename, const std::string& outputFilename) {
+
+    checkFilesAndExitIfFoundErrors(toBeCompressedFilename, outputFilename);
+
+    std::cout << "Compressing...\n";
+    Compressor::compress(toBeCompressedFilename, outputFilename);
+    std::cout << "Finished Compressing\n";
+
+    int originalFileSize = BinaryIO::getFileSize(toBeCompressedFilename);
+    int compressedFileSize = BinaryIO::getFileSize(outputFilename);
+    std::cout << "Compression Ratio: " << 1.0 * originalFileSize / compressedFileSize << std::endl;
 }
 
+void checkFilesAndExitIfFoundErrors(const std::string& inputFilename, const std::string& outputFilename) {
+    if (!BinaryIO::doesFileExist(inputFilename)) {
+        std::cerr << "File " << inputFilename << " is not found!\n";
+        exit(0);
+    }
+
+    if (BinaryIO::doesFileExist(outputFilename)) {
+        std::cout << outputFilename << " already exists, Do you want to overwrite it? [Y]/[N] : ";
+        std::string answer;
+        std::cin >> answer;
+        if (answer != "y" && answer != "Y") {
+            exit(0);
+        }
+    }
+}
+
+
+void showHelp() {
+    std::cout << "Welcome to Compressor!\n"
+                 "________________________________________________\n"
+                 "Usage : compressor OPTION input_file output_file\n\n"
+
+                 "OPTION:\n"
+                 "        -c  --compress     Compress the file\n"
+                 "        -d  --decompress   Decompress the file\n\n";
+
+}

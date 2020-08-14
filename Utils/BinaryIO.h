@@ -7,6 +7,11 @@
 
 namespace BinaryIO {
 
+    bool doesFileExist(const std::string &filename){
+        std::ifstream input(filename , std::ios::in | std::ios::binary);
+        return input.good();
+    }
+
     int getFileSize(std::ifstream &input){
         input.seekg(0 , std::ios::end);
         return input.tellg();

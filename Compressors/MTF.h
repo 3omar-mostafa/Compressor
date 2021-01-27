@@ -33,7 +33,7 @@ public:
 
     static void encode(const std::string& filename, const std::string& outputFileName) {
 
-        std::string toBeEncoded = BinaryIO::read(filename);
+        std::string toBeEncoded = BinaryIO::readString(filename);
 
         generateSymbols();
 
@@ -52,7 +52,7 @@ public:
 
     static void decode(const std::string& filename, const std::string& outputFileName) {
 
-        std::string toBeDecoded = BinaryIO::read(filename);
+        std::string toBeDecoded = BinaryIO::readString(filename);
 
         generateSymbols();
 

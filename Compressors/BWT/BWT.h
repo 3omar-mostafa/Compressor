@@ -18,7 +18,7 @@ public:
 
     static void encode(const std::string& filename, const std::string& outputFileName) {
 
-        std::string toBeEncoded = BinaryIO::read(filename);
+        std::string toBeEncoded = BinaryIO::readString(filename);
 
         toBeEncoded += '\0';
 
@@ -34,7 +34,7 @@ public:
 
     static void decode(const std::string& filename, const std::string& outputFileName) {
 
-        std::string bwt = BinaryIO::read(filename);
+        std::string bwt = BinaryIO::readString(filename);
 
         std::string index;
         for (int i = 0; i < sizeof(originalIndex); ++i) {

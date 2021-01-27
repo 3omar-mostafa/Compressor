@@ -19,7 +19,7 @@ public:
 
     static void encode(const std::string& filename, const std::string& outputFileName) {
 
-        std::string toBeEncoded = BinaryIO::read(filename);
+        std::string toBeEncoded = BinaryIO::readString(filename);
 
         auto frequencies = generateFrequencies(toBeEncoded);
         Node* huffmanTree = buildHuffmanTree(frequencies);
@@ -44,14 +44,14 @@ public:
 
     static void decode(const std::string& filename, const std::string& outputFileName) {
 
-        uint32_t fileHeaderSizeInBytes = byteSize(decodeFileHeaderSizeInBits(BinaryIO::read(filename, 0, 2)));
+        uint32_t fileHeaderSizeInBytes = byteSize(decodeFileHeaderSizeInBits(BinaryIO::readString(filename, 0, 2)));
 
-        std::string fileHeader = BinaryIO::read(filename, 0, fileHeaderSizeInBytes);
+        std::string fileHeader = BinaryIO::readString(filename, 0, fileHeaderSizeInBytes);
 
         auto huffmanCodes = reconstructHuffmanCodes(fileHeader);
         Node* huffmanTree = reconstructHuffmanTree(huffmanCodes);
 
-        std::string toBeDecoded = BinaryIO::read(filename, fileHeaderSizeInBytes);
+        std::string toBeDecoded = BinaryIO::readString(filename, fileHeaderSizeInBytes);
 
         std::string decodedData = decode(toBeDecoded, huffmanCodes, huffmanTree);
 

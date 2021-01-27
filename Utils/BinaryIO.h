@@ -22,7 +22,7 @@ namespace BinaryIO {
         return getFileSize(input);
     }
 
-    std::string read(const std::string& filename, int startPosition, int length) {
+    std::string readString(const std::string& filename, int startPosition, int length) {
         std::ifstream input(filename, std::ios::in | std::ios::binary);
         std::string fileData;
         if (input) {
@@ -34,12 +34,12 @@ namespace BinaryIO {
         return fileData;
     }
 
-    std::string read(const std::string& filename, int startPosition) {
-        return read(filename, startPosition, getFileSize(filename) - startPosition);
+    std::string readString(const std::string& filename, int startPosition) {
+        return readString(filename, startPosition, getFileSize(filename) - startPosition);
     }
 
-    std::string read(const std::string& filename) {
-        return read(filename , 0 , getFileSize(filename));
+    std::string readString(const std::string& filename) {
+        return readString(filename, 0, getFileSize(filename));
     }
 
 

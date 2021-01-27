@@ -37,7 +37,7 @@ public:
         auto dictionary = initializeEncodingDictionary();
         uint32_t currentWordLength;
 
-        std::string toBeCompressedString = BinaryIO::read(filename);
+        std::string toBeCompressedString = BinaryIO::readString(filename);
 
         std::string currentMatch, bitString;
         for (char c : toBeCompressedString) {
@@ -68,7 +68,7 @@ public:
 
         auto dictionary = initializeDecodingDictionary();
 
-        std::string toBeDecompressed = Converter::string_ToBitString(BinaryIO::read(filename));
+        std::string toBeDecompressed = Converter::string_ToBitString(BinaryIO::readString(filename));
 
         std::string decoded;
         uint32_t index;

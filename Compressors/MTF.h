@@ -37,16 +37,15 @@ public:
 
         generateSymbols();
 
-        std::string encoded;
-        for (uint8_t symbol : toBeEncoded) {
+        for (auto& symbol : toBeEncoded) {
             auto ptr = getIndexOfValue(symbol);
-            encoded += ptr.index;
+            symbol = ptr.index; // Encode in-place
             symbolsList.erase(ptr.iterator);
-            symbolsList.push_front(symbol);
+            symbolsList.push_front(ptr.value);
         }
 
         remove(outputFileName.c_str()); // Remove Output File If Exists
-        BinaryIO::write(outputFileName, encoded);
+        BinaryIO::write(outputFileName, toBeEncoded);
 
     }
 
@@ -56,16 +55,16 @@ public:
 
         generateSymbols();
 
-        std::string decoded;
-        for (uint8_t index : toBeDecoded) {
+        for (auto& byte : toBeDecoded) {
+            uint8_t index = byte;
             auto ptr = getValueOfIndex(index);
-            decoded += ptr.value;
+            byte = ptr.value; // Decode in-place
             symbolsList.erase(ptr.iterator);
             symbolsList.push_front(ptr.value);
         }
 
         remove(outputFileName.c_str()); // Remove Output File If Exists
-        BinaryIO::write(outputFileName, decoded);
+        BinaryIO::write(outputFileName, toBeDecoded);
 
     }
 

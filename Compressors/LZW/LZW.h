@@ -7,12 +7,17 @@
 #include "../../Utils/BinaryIO.h"
 #include "../../Utils/Converter.h"
 #include "Utils.h"
+#include <bit_string.h>
 
-
+/**
+ * Lempel–Ziv–Welch Compression Algorithm
+ */
 class LZW {
 
+    static const uint32_t BYTE = 8;
+
     static std::unordered_map<std::string, uint32_t> initializeEncodingDictionary() {
-        std::unordered_map<std::string, uint32_t> encodingDictionary;
+        std::unordered_map<std::string, uint32_t> encodingDictionary(256);
         for (int i = 0; i < 256; ++i) {
             std::string s(1, i);
             encodingDictionary[s] = i;
@@ -21,7 +26,7 @@ class LZW {
     }
 
     static std::unordered_map<uint32_t, std::string> initializeDecodingDictionary() {
-        std::unordered_map<uint32_t, std::string> decodingDictionary;
+        std::unordered_map<uint32_t, std::string> decodingDictionary(256);
         for (int i = 0; i < 256; ++i) {
             std::string s(1, i);
             decodingDictionary[i] = s;
@@ -35,30 +40,31 @@ public:
     static void encode(const std::string& filename, const std::string& outputFileName) {
 
         auto dictionary = initializeEncodingDictionary();
+
+        std::string toBeCompressed = BinaryIO::readString(filename);
+        bit_string encodedData;
+        encodedData.reserve(toBeCompressed.size() / (4 * BYTE));
+
         uint32_t currentWordLength;
-
-        std::string toBeCompressedString = BinaryIO::readString(filename);
-
-        std::string currentMatch, bitString;
-        for (char c : toBeCompressedString) {
-            currentMatch += c;
+        std::string currentMatch;
+        for (uint8_t byte : toBeCompressed) {
+            currentMatch += byte;
 
             // if not found in dictionary
             if (dictionary.find(currentMatch) == dictionary.end()) {
                 dictionary[currentMatch] = dictionary.size();
                 currentWordLength = numberOfBitsToStoreRangeOf(dictionary.size());
                 currentMatch.pop_back();
-                bitString += Converter::bits_ToBitString(dictionary[currentMatch], currentWordLength);
-                currentMatch = c;
+                encodedData.append_uint_32(dictionary[currentMatch], currentWordLength);
+                currentMatch = byte;
             }
 
         }
 
         // save last matched word
         currentWordLength = numberOfBitsToStoreRangeOf(dictionary.size());
-        bitString += Converter::bits_ToBitString(dictionary[currentMatch], currentWordLength);
+        encodedData.append_uint_32(dictionary[currentMatch], currentWordLength);
 
-        std::string encodedData = Converter::bitString_ToRealBinary(bitString);
         remove(outputFileName.c_str()); // Remove Output File If Exists
         BinaryIO::write(outputFileName, encodedData);
     }
@@ -68,10 +74,10 @@ public:
 
         auto dictionary = initializeDecodingDictionary();
 
-        std::string toBeDecompressed = Converter::string_ToBitString(BinaryIO::readString(filename));
+        bit_string toBeDecompressed = BinaryIO::readBitString(filename);
 
         std::string decoded;
-        uint32_t index;
+        decoded.reserve(toBeDecompressed.size()/BYTE);
         uint32_t currentWordLength = numberOfBitsToStoreRangeOf(dictionary.size());
         for (int i = 0; i < toBeDecompressed.length(); i += currentWordLength) {
 
@@ -82,17 +88,17 @@ public:
 
             currentWordLength = numberOfBitsToStoreRangeOf(dictionary.size() + 1);
 
-            index = Converter::bitString_ToInt(toBeDecompressed.substr(i, currentWordLength));
+            uint32_t index = toBeDecompressed.substr(i, currentWordLength).to_uint_32();
 
             // The last char in the previous entry is not added, as its value is the first char of the next entry
             if (i != 0) {
-                char lastCharInPreviousEntry = dictionary[index][0];
+                uint8_t lastCharInPreviousEntry = dictionary[index].front();
                 dictionary[dictionary.size() - 1] += lastCharInPreviousEntry;
             }
 
-            std::string out = dictionary[index];
-            decoded += out;
-            dictionary[dictionary.size()] = out;
+            std::string word = dictionary[index];
+            decoded += word;
+            dictionary[dictionary.size()] = std::move(word);
 
         }
 

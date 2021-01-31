@@ -13,6 +13,10 @@ set(SOURCE_FILES_LIST main.cpp ${UTILS} ${COMPRESSORS})
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES_LIST})
 
+add_subdirectory(Bit-String)
+target_link_libraries(${PROJECT_NAME} Bit_String)
+include_directories(Bit-String/Bit_String)
+
 ########################################### For Visual Studio ###########################################
 
 # Generate Folder Hierarchy instead of adding all files in the same folder

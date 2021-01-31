@@ -1,0 +1,3 @@
+[submodule "Bit-String"]
+	path = Bit-String
+	url = https://github.com/3omar-mostafa/Bit-String.git

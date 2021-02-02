@@ -1,0 +1,122 @@
+name: Compressor
+
+on: [push]
+
+jobs:
+  Ubuntu:
+    name: Build/Test - Ubuntu - GCC ${{ matrix.gcc_version }}
+    runs-on: ubuntu-latest
+    env:
+      CC : gcc-${{ matrix.gcc_version }}
+      CXX: g++-${{ matrix.gcc_version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc_version: [7, 8, 9, 10]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+  
+    - name: Build
+      run: |
+        mkdir cmake-build
+        cd ./cmake-build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake --build . --config Release --clean-first --target Compressor
+
+    - name: Download enwik8
+      run: |
+        wget -q 'http://mattmahoney.net/dc/enwik8.zip'
+        unzip enwik8.zip
+        
+    - name: Run on enwik8
+      run: |
+        time ./cmake-build/Compressor -c enwik8 enwik8.compressed
+        time ./cmake-build/Compressor -d enwik8.compressed enwik8.decompressed
+        
+    - name: Test Integrity
+      run: |
+        rm enwik8
+        unzip enwik8.zip
+        ORIGINAL_ENWIK8_SHA512=`sha512sum enwik8`
+        echo "original enwik8 sha512 hash: $ORIGINAL_ENWIK8_SHA512"
+        mv enwik8.decompressed enwik8
+        echo "Decompressed enwik8 sha512 hash:" `sha512sum enwik8`
+        echo "$ORIGINAL_ENWIK8_SHA512" | sha512sum --check
+
+    - name: Upload Binary
+      uses: actions/upload-artifact@v2
+      with:
+        name: Compressor_Ubuntu_GCC_${{ matrix.gcc_version }}
+        path: ./cmake-build/Compressor
+
+
+########################################################################################
+
+  Windows:
+    name: Build/Test - Windows - ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cmake_generator: CodeBlocks - MinGW Makefiles
+            cmake_platform_args: " "
+            name: Mingw-w64 GCC 8
+            os: windows-latest
+          - cmake_generator: Visual Studio 15 2017
+            cmake_platform_args: -A x64
+            name: Visual Studio 2017
+            os: windows-2016
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+  
+    - name: Build
+      run: |
+        mkdir cmake-build
+        cd ./cmake-build
+        cmake .. -DCMAKE_BUILD_TYPE=Release  -G "${{ matrix.cmake_generator }}" ${{ matrix.cmake_platform_args }}
+        cmake --build . --config Release --clean-first --target Compressor
+
+    - name: Download enwik8
+      shell: powershell
+      run: |
+        curl.exe -o enwik8.zip --url 'http://mattmahoney.net/dc/enwik8.zip'
+        Expand-Archive -LiteralPath enwik8.zip -DestinationPath .
+
+    - name: Run on enwik8
+      shell: bash
+      run: |
+        # Visual Studio and Mingw save the executable in different paths
+        exe_path=`find ./cmake-build/ -type f -iname "Compressor.exe" 2>/dev/null`
+        export PATH="`dirname $exe_path`":$PATH
+        
+        time Compressor.exe -c enwik8 enwik8.compressed
+        time Compressor.exe -d enwik8.compressed enwik8.decompressed
+
+    - name: Test Integrity
+      shell: bash
+      run: |
+        rm enwik8
+        unzip enwik8.zip
+        ORIGINAL_ENWIK8_SHA512=`sha512sum enwik8`
+        echo "original enwik8 sha512 hash: $ORIGINAL_ENWIK8_SHA512"
+        mv enwik8.decompressed enwik8
+        echo "Decompressed enwik8 sha512 hash:" `sha512sum enwik8`
+        echo "$ORIGINAL_ENWIK8_SHA512" | sha512sum --check
+
+    - name: Upload Binary
+      uses: actions/upload-artifact@v2
+      with:
+        name: Compressor_Windows ${{ matrix.name }}
+        path: |
+          # Path varies from Visual Studio to MinGW
+          ./cmake-build/Compressor.exe
+          ./cmake-build/*/Compressor.exe

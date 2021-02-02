@@ -28,7 +28,8 @@ mkdir cmake-build
 cd ./cmake-build
 cmake .. -G "Visual Studio 15 2017"
 ```
-
+# Download Binaries
+Binaries for Windows and Ubuntu are available at [Releases](https://github.com/3omar-mostafa/Compressor/releases/latest)
 # How To Run
 ```
 ./Compressor OPTION input_file output_file

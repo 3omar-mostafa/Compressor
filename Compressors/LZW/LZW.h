@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <cstdint>
 #include "../../Utils/BinaryIO.h"
-#include "../../Utils/Converter.h"
 #include "Utils.h"
 #include <bit_string.h>
 
